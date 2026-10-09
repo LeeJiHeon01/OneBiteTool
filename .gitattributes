@@ -1,0 +1,7 @@
+# Keep LF line endings on every platform (project rule: UTF-8 / LF)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.otf binary
+*.jar binary
+*.bat text eol=crlf

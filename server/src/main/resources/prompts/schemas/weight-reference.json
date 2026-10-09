@@ -1,0 +1,21 @@
+{
+  "name": "weight_reference",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "found", "grams", "volumeMl", "volumeText", "matchesPreparation", "sourceUrl", "sourceQuote", "sourceType"
+    ],
+    "properties": {
+      "found": { "type": "boolean" },
+      "grams": { "type": ["number", "null"] },
+      "volumeMl": { "type": ["number", "null"] },
+      "volumeText": { "type": ["string", "null"] },
+      "matchesPreparation": { "type": ["boolean", "null"] },
+      "sourceUrl": { "type": ["string", "null"] },
+      "sourceQuote": { "type": ["string", "null"] },
+      "sourceType": { "type": ["string", "null"], "enum": ["PUBLIC_INSTITUTION", "INDUSTRY", null] }
+    }
+  }
+}

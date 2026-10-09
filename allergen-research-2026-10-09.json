@@ -1,0 +1,1477 @@
+{
+ "_readme": "AI가 공개 자료(식약처 알레르기 유발물질 표시 대상 19종)와 일반적인 시판 제품 원료를 바탕으로 만든 보수적 매핑. 헷갈리면 포함하는 쪽으로 잡음. reviewLevel=AI_RESEARCHED — 사람이 확인한 것이 아님. 출시 전 사람 확인 필요(release-roadmap P2-12).",
+ "createdAt": "2026-10-09",
+ "reviewLevel": "AI_RESEARCHED",
+ "allergenCodes": [
+  "wheat",
+  "buckwheat",
+  "soybean",
+  "peanut",
+  "egg",
+  "milk",
+  "pork",
+  "chicken",
+  "beef",
+  "mackerel",
+  "crab",
+  "shrimp",
+  "squid",
+  "shellfish",
+  "peach",
+  "tomato",
+  "walnut",
+  "pine_nut",
+  "sulfite"
+ ],
+ "entries": [
+  {
+   "name": "계란",
+   "aliases": [
+    "달걀",
+    "계란노른자",
+    "계란흰자",
+    "날계란"
+   ],
+   "allergens": [
+    "egg"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "메추리알",
+   "aliases": [],
+   "allergens": [
+    "egg"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": "알류(가금류의 알)"
+  },
+  {
+   "name": "우유",
+   "aliases": [
+    "흰우유"
+   ],
+   "allergens": [
+    "milk"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "버터",
+   "aliases": [
+    "무염버터",
+    "가염버터"
+   ],
+   "allergens": [
+    "milk"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "치즈",
+   "aliases": [
+    "슬라이스치즈",
+    "모짜렐라치즈",
+    "피자치즈",
+    "체다치즈",
+    "파마산치즈"
+   ],
+   "allergens": [
+    "milk"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "생크림",
+   "aliases": [
+    "휘핑크림"
+   ],
+   "allergens": [
+    "milk"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "요거트",
+   "aliases": [
+    "플레인요거트",
+    "요구르트"
+   ],
+   "allergens": [
+    "milk"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "돼지고기",
+   "aliases": [
+    "삼겹살",
+    "목살",
+    "앞다리살",
+    "뒷다리살",
+    "다진돼지고기",
+    "돼지고기 다짐육",
+    "제육용 돼지고기",
+    "대패삼겹살"
+   ],
+   "allergens": [
+    "pork"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "닭고기",
+   "aliases": [
+    "닭",
+    "닭가슴살",
+    "닭다리살",
+    "닭날개",
+    "닭안심",
+    "닭볶음탕용 닭"
+   ],
+   "allergens": [
+    "chicken"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "쇠고기",
+   "aliases": [
+    "소고기",
+    "다진소고기",
+    "소고기 다짐육",
+    "차돌박이",
+    "불고기용 소고기",
+    "국거리 소고기",
+    "양지"
+   ],
+   "allergens": [
+    "beef"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "고등어",
+   "aliases": [
+    "고등어캔",
+    "자반고등어"
+   ],
+   "allergens": [
+    "mackerel"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "게",
+   "aliases": [
+    "꽃게",
+    "대게",
+    "게살"
+   ],
+   "allergens": [
+    "crab"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "새우",
+   "aliases": [
+    "칵테일새우",
+    "냉동새우",
+    "건새우",
+    "보리새우"
+   ],
+   "allergens": [
+    "shrimp"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "새우젓",
+   "aliases": [],
+   "allergens": [
+    "shrimp"
+   ],
+   "hidden": true,
+   "productVaries": false,
+   "note": "새우로 만든 젓갈"
+  },
+  {
+   "name": "오징어",
+   "aliases": [
+    "마른오징어",
+    "오징어채",
+    "진미채"
+   ],
+   "allergens": [
+    "squid"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "조개",
+   "aliases": [
+    "바지락",
+    "홍합",
+    "모시조개",
+    "가리비",
+    "전복",
+    "굴",
+    "조갯살"
+   ],
+   "allergens": [
+    "shellfish"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": "식약처 기준 조개류에 굴·전복·홍합 포함"
+  },
+  {
+   "name": "복숭아",
+   "aliases": [
+    "황도",
+    "백도",
+    "복숭아통조림"
+   ],
+   "allergens": [
+    "peach"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "토마토",
+   "aliases": [
+    "방울토마토",
+    "토마토소스",
+    "토마토페이스트",
+    "홀토마토"
+   ],
+   "allergens": [
+    "tomato"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "케첩",
+   "aliases": [
+    "토마토케첩"
+   ],
+   "allergens": [
+    "tomato"
+   ],
+   "hidden": true,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "호두",
+   "aliases": [],
+   "allergens": [
+    "walnut"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "잣",
+   "aliases": [],
+   "allergens": [
+    "pine_nut"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "땅콩",
+   "aliases": [
+    "땅콩버터",
+    "볶은땅콩"
+   ],
+   "allergens": [
+    "peanut"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "두부",
+   "aliases": [
+    "순두부",
+    "연두부",
+    "부침두부",
+    "찌개두부"
+   ],
+   "allergens": [
+    "soybean"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "유부",
+   "aliases": [],
+   "allergens": [
+    "soybean"
+   ],
+   "hidden": true,
+   "productVaries": false,
+   "note": "두부를 튀긴 것"
+  },
+  {
+   "name": "콩",
+   "aliases": [
+    "검은콩",
+    "서리태",
+    "백태",
+    "메주콩"
+   ],
+   "allergens": [
+    "soybean"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": "대두류. 완두·강낭콩·녹두는 대두가 아님 → 별도"
+  },
+  {
+   "name": "콩나물",
+   "aliases": [],
+   "allergens": [
+    "soybean"
+   ],
+   "hidden": true,
+   "productVaries": false,
+   "note": "대두를 키운 나물. 보수적으로 대두 표시"
+  },
+  {
+   "name": "두유",
+   "aliases": [],
+   "allergens": [
+    "soybean"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "밀가루",
+   "aliases": [
+    "중력분",
+    "박력분",
+    "강력분"
+   ],
+   "allergens": [
+    "wheat"
+   ],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "메밀면",
+   "aliases": [
+    "메밀국수",
+    "메밀소바",
+    "냉메밀"
+   ],
+   "allergens": [
+    "buckwheat",
+    "wheat"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "시판 메밀면은 대부분 밀가루를 섞음"
+  },
+  {
+   "name": "간장",
+   "aliases": [
+    "진간장",
+    "양조간장",
+    "국간장",
+    "조선간장",
+    "맛간장"
+   ],
+   "allergens": [
+    "soybean",
+    "wheat"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "양조간장은 대두·밀 원료. 국간장은 대두·소금만인 제품도 있으나 보수적으로 밀 포함"
+  },
+  {
+   "name": "된장",
+   "aliases": [
+    "재래된장",
+    "시판된장"
+   ],
+   "allergens": [
+    "soybean",
+    "wheat"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "대두 원료. 시판 제품 다수에 밀 포함"
+  },
+  {
+   "name": "고추장",
+   "aliases": [],
+   "allergens": [
+    "wheat",
+    "soybean"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "시판 고추장 다수가 밀쌀·대두 사용"
+  },
+  {
+   "name": "쌈장",
+   "aliases": [],
+   "allergens": [
+    "soybean",
+    "wheat"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "춘장",
+   "aliases": [
+    "짜장소스"
+   ],
+   "allergens": [
+    "soybean",
+    "wheat"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "굴소스",
+   "aliases": [],
+   "allergens": [
+    "shellfish",
+    "soybean",
+    "wheat"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "굴 추출물(조개류) + 간장 성분"
+  },
+  {
+   "name": "참치액",
+   "aliases": [],
+   "allergens": [
+    "soybean",
+    "wheat"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "간장 베이스 제품이 많음. 가다랑어는 표시 대상 아님"
+  },
+  {
+   "name": "마요네즈",
+   "aliases": [],
+   "allergens": [
+    "egg",
+    "soybean"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "난황 + 대두유 사용 제품 다수"
+  },
+  {
+   "name": "카레가루",
+   "aliases": [
+    "카레",
+    "고형카레"
+   ],
+   "allergens": [
+    "wheat",
+    "milk",
+    "soybean",
+    "pork",
+    "chicken",
+    "beef",
+    "tomato"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "시판 카레는 제품마다 육류·우유·토마토 포함 여부가 다름. 보수적으로 모두 표시"
+  },
+  {
+   "name": "짜장분말",
+   "aliases": [],
+   "allergens": [
+    "wheat",
+    "soybean",
+    "pork"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "다시다",
+   "aliases": [
+    "쇠고기다시다",
+    "조미료"
+   ],
+   "allergens": [
+    "beef",
+    "wheat",
+    "soybean"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "제품명에 따라 원료 육류가 다름"
+  },
+  {
+   "name": "치킨스톡",
+   "aliases": [],
+   "allergens": [
+    "chicken",
+    "milk",
+    "soybean",
+    "wheat"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "라면스프",
+   "aliases": [],
+   "allergens": [
+    "wheat",
+    "soybean",
+    "beef",
+    "pork",
+    "chicken",
+    "shrimp",
+    "milk"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "제품마다 다름. 보수적으로 흔한 성분 모두"
+  },
+  {
+   "name": "빵가루",
+   "aliases": [],
+   "allergens": [
+    "wheat",
+    "milk",
+    "egg",
+    "soybean"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "부침가루",
+   "aliases": [],
+   "allergens": [
+    "wheat",
+    "soybean",
+    "egg"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "튀김가루",
+   "aliases": [],
+   "allergens": [
+    "wheat",
+    "soybean",
+    "egg"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "콩기름",
+   "aliases": [
+    "대두유"
+   ],
+   "allergens": [
+    "soybean"
+   ],
+   "hidden": true,
+   "productVaries": false,
+   "note": "대두로 만든 기름"
+  },
+  {
+   "name": "와인",
+   "aliases": [
+    "레드와인",
+    "화이트와인",
+    "요리용 와인"
+   ],
+   "allergens": [
+    "sulfite"
+   ],
+   "hidden": true,
+   "productVaries": false,
+   "note": "보존료로 아황산류 사용 흔함"
+  },
+  {
+   "name": "건포도",
+   "aliases": [],
+   "allergens": [
+    "sulfite"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "말린 과일",
+   "aliases": [
+    "건과일",
+    "건살구",
+    "곶감"
+   ],
+   "allergens": [
+    "sulfite"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "김치",
+   "aliases": [
+    "배추김치",
+    "포기김치",
+    "묵은지",
+    "신김치",
+    "깍두기",
+    "총각김치"
+   ],
+   "allergens": [
+    "shrimp"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "새우젓 사용이 흔함. 굴·멸치액젓을 쓰는 경우도 있음(멸치는 표시 대상 아님)"
+  },
+  {
+   "name": "어묵",
+   "aliases": [
+    "사각어묵",
+    "오뎅",
+    "어묵탕용 어묵"
+   ],
+   "allergens": [
+    "wheat",
+    "soybean",
+    "egg"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "생선살 + 밀가루·전분. 생선 종류는 대부분 표시 대상 아님"
+  },
+  {
+   "name": "게맛살",
+   "aliases": [
+    "맛살",
+    "크래미"
+   ],
+   "allergens": [
+    "crab",
+    "wheat",
+    "egg",
+    "soybean"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "게 추출물 첨가 제품이 많음"
+  },
+  {
+   "name": "햄",
+   "aliases": [
+    "슬라이스햄",
+    "통조림햄",
+    "스팸",
+    "런천미트"
+   ],
+   "allergens": [
+    "pork",
+    "soybean",
+    "wheat",
+    "milk"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "소시지",
+   "aliases": [
+    "비엔나소시지",
+    "프랑크소시지"
+   ],
+   "allergens": [
+    "pork",
+    "chicken",
+    "soybean",
+    "wheat",
+    "milk"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "베이컨",
+   "aliases": [],
+   "allergens": [
+    "pork"
+   ],
+   "hidden": true,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "참치캔",
+   "aliases": [
+    "참치",
+    "통조림 참치"
+   ],
+   "allergens": [
+    "soybean"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "참치는 표시 대상 아님. 대두유 사용 제품이 많음"
+  },
+  {
+   "name": "국수",
+   "aliases": [
+    "소면",
+    "중면",
+    "칼국수면",
+    "우동면",
+    "라면사리"
+   ],
+   "allergens": [
+    "wheat"
+   ],
+   "hidden": true,
+   "productVaries": false,
+   "note": "밀가루 면"
+  },
+  {
+   "name": "파스타",
+   "aliases": [
+    "스파게티",
+    "펜네",
+    "마카로니"
+   ],
+   "allergens": [
+    "wheat",
+    "egg"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "듀럼밀. 생면은 계란 포함"
+  },
+  {
+   "name": "라면",
+   "aliases": [],
+   "allergens": [
+    "wheat",
+    "soybean",
+    "beef",
+    "pork",
+    "chicken",
+    "shrimp",
+    "milk"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": "면(밀)+스프. 제품마다 다름"
+  },
+  {
+   "name": "밀떡",
+   "aliases": [
+    "떡볶이 밀떡"
+   ],
+   "allergens": [
+    "wheat"
+   ],
+   "hidden": true,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "빵",
+   "aliases": [
+    "식빵",
+    "모닝빵"
+   ],
+   "allergens": [
+    "wheat",
+    "milk",
+    "egg",
+    "soybean"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "만두",
+   "aliases": [
+    "냉동만두",
+    "물만두",
+    "군만두"
+   ],
+   "allergens": [
+    "wheat",
+    "pork",
+    "soybean",
+    "beef",
+    "chicken"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "견과류 믹스",
+   "aliases": [
+    "하루견과",
+    "믹스넛"
+   ],
+   "allergens": [
+    "walnut",
+    "peanut",
+    "pine_nut"
+   ],
+   "hidden": true,
+   "productVaries": true,
+   "note": ""
+  },
+  {
+   "name": "물",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "소금",
+   "aliases": [
+    "천일염",
+    "꽃소금",
+    "굵은소금"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "설탕",
+   "aliases": [
+    "백설탕",
+    "황설탕",
+    "흑설탕"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "후추",
+   "aliases": [
+    "후춧가루",
+    "통후추"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "고춧가루",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "식초",
+   "aliases": [
+    "양조식초",
+    "사과식초"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "올리고당",
+   "aliases": [
+    "물엿",
+    "조청"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "꿀",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "매실청",
+   "aliases": [
+    "매실액"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "맛술",
+   "aliases": [
+    "미림",
+    "미향"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": "일부 제품은 아황산류가 있을 수 있으나 일반적으로 표시 대상 없음"
+  },
+  {
+   "name": "청주",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "참기름",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "들기름",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "식용유",
+   "aliases": [
+    "카놀라유",
+    "포도씨유",
+    "해바라기유"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": "대두유(콩기름)는 별도 항목으로 대두 표시"
+  },
+  {
+   "name": "올리브유",
+   "aliases": [
+    "엑스트라버진 올리브유"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "참깨",
+   "aliases": [
+    "깨",
+    "통깨",
+    "볶은참깨",
+    "깨소금"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": "참깨는 표시 대상 19종에 없음"
+  },
+  {
+   "name": "들깨가루",
+   "aliases": [
+    "들깨"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "전분",
+   "aliases": [
+    "감자전분",
+    "옥수수전분",
+    "녹말가루"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "쌀",
+   "aliases": [
+    "백미",
+    "찹쌀"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "밥",
+   "aliases": [
+    "햇반",
+    "즉석밥",
+    "찬밥"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "떡국떡",
+   "aliases": [
+    "쌀떡",
+    "떡볶이 쌀떡"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "당면",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "김",
+   "aliases": [
+    "김가루",
+    "조미김"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": "조미김은 기름·소금만 쓰는 제품이 일반적"
+  },
+  {
+   "name": "미역",
+   "aliases": [
+    "건미역"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "다시마",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "멸치",
+   "aliases": [
+    "국물용 멸치",
+    "볶음용 멸치",
+    "멸치액젓",
+    "까나리액젓"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": "멸치·멸치액젓은 표시 대상 아님"
+  },
+  {
+   "name": "북어",
+   "aliases": [
+    "황태",
+    "북어채"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "연어",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": "표시 대상 아님"
+  },
+  {
+   "name": "대구",
+   "aliases": [
+    "동태",
+    "명태"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": "표시 대상 아님"
+  },
+  {
+   "name": "양파",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "대파",
+   "aliases": [
+    "파"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": "'파'는 대파로 본다"
+  },
+  {
+   "name": "쪽파",
+   "aliases": [
+    "실파"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "마늘",
+   "aliases": [
+    "다진마늘",
+    "통마늘"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "생강",
+   "aliases": [
+    "다진생강"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "감자",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "고구마",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "당근",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "애호박",
+   "aliases": [
+    "호박",
+    "주키니"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "단호박",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "오이",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "양배추",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "배추",
+   "aliases": [
+    "알배추"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "무",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "표고버섯",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "느타리버섯",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "팽이버섯",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "새송이버섯",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "양송이버섯",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "고추",
+   "aliases": [
+    "청양고추",
+    "풋고추",
+    "홍고추"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "피망",
+   "aliases": [
+    "파프리카"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "시금치",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "깻잎",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "상추",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "부추",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "브로콜리",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "숙주",
+   "aliases": [
+    "숙주나물"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "옥수수",
+   "aliases": [
+    "옥수수콘",
+    "스위트콘"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "완두콩",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "사과",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "레몬",
+   "aliases": [
+    "레몬즙"
+   ],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": ""
+  },
+  {
+   "name": "아몬드",
+   "aliases": [],
+   "allergens": [],
+   "hidden": false,
+   "productVaries": false,
+   "note": "표시 대상 19종에 없음(호두·잣·땅콩만 해당)"
+  }
+ ]
+}

@@ -1,0 +1,648 @@
+{
+ "_readme": "재료 분류·민감도 (P1-07). sensitivity: HIGH=간을 정하는 재료(원문보다 많아지지 않게+맛보고 추가), RATIO=비율이 중요(오차 10%), NORMAL=일반(오차 25%). 물은 NORMAL이며 밥 짓기·반죽·찜 단계에서 서버 문맥 규칙으로 RATIO로 올린다.",
+ "createdAt": "2026-10-09",
+ "splitFromAliases": [
+  {
+   "newIngredient": "액젓",
+   "aliases": [
+    "멸치액젓",
+    "까나리액젓",
+    "피시소스"
+   ],
+   "category": "양념",
+   "sensitivity": "HIGH",
+   "allergens": [],
+   "note": "'멸치'의 별칭에서 분리. 멸치(국물용)는 NORMAL, 액젓은 짠 양념이라 HIGH. 멸치·까나리는 알레르기 표시 대상 아님"
+  },
+  {
+   "newIngredient": "깨소금",
+   "aliases": [],
+   "category": "깨·들깨",
+   "sensitivity": "HIGH",
+   "allergens": [],
+   "note": "'참깨'의 별칭에서 분리. 소금이 섞여 간에 영향"
+  }
+ ],
+ "items": [
+  {
+   "name": "계란",
+   "category": "알·유제품",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "메추리알",
+   "category": "알·유제품",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "우유",
+   "category": "알·유제품",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "버터",
+   "category": "알·유제품",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "치즈",
+   "category": "알·유제품",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "생크림",
+   "category": "알·유제품",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "요거트",
+   "category": "알·유제품",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "돼지고기",
+   "category": "육류",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "닭고기",
+   "category": "육류",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "쇠고기",
+   "category": "육류",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "고등어",
+   "category": "해산물",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "게",
+   "category": "해산물",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "새우",
+   "category": "해산물",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "새우젓",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "오징어",
+   "category": "해산물",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "조개",
+   "category": "해산물",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "복숭아",
+   "category": "과일·견과",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "토마토",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "케첩",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "호두",
+   "category": "과일·견과",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "잣",
+   "category": "과일·견과",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "땅콩",
+   "category": "과일·견과",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "두부",
+   "category": "두부·콩",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "유부",
+   "category": "두부·콩",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "콩",
+   "category": "두부·콩",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "콩나물",
+   "category": "두부·콩",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "두유",
+   "category": "두부·콩",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "밀가루",
+   "category": "가루·반죽",
+   "sensitivity": "RATIO"
+  },
+  {
+   "name": "메밀면",
+   "category": "곡물·면·떡",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "간장",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "된장",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "고추장",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "쌈장",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "춘장",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "굴소스",
+   "category": "소스·가공양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "참치액",
+   "category": "소스·가공양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "마요네즈",
+   "category": "소스·가공양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "카레가루",
+   "category": "소스·가공양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "짜장분말",
+   "category": "소스·가공양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "다시다",
+   "category": "소스·가공양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "치킨스톡",
+   "category": "소스·가공양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "라면스프",
+   "category": "소스·가공양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "빵가루",
+   "category": "가루·반죽",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "부침가루",
+   "category": "가루·반죽",
+   "sensitivity": "RATIO"
+  },
+  {
+   "name": "튀김가루",
+   "category": "가루·반죽",
+   "sensitivity": "RATIO"
+  },
+  {
+   "name": "콩기름",
+   "category": "기름",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "와인",
+   "category": "주류·향 재료",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "건포도",
+   "category": "과일·견과",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "말린 과일",
+   "category": "과일·견과",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "김치",
+   "category": "김치·절임",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "어묵",
+   "category": "해산물",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "게맛살",
+   "category": "해산물",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "햄",
+   "category": "육류",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "소시지",
+   "category": "육류",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "베이컨",
+   "category": "육류",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "참치캔",
+   "category": "해산물",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "국수",
+   "category": "곡물·면·떡",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "파스타",
+   "category": "곡물·면·떡",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "라면",
+   "category": "곡물·면·떡",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "밀떡",
+   "category": "곡물·면·떡",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "빵",
+   "category": "곡물·면·떡",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "만두",
+   "category": "곡물·면·떡",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "견과류 믹스",
+   "category": "과일·견과",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "물",
+   "category": "물",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "소금",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "설탕",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "후추",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "고춧가루",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "식초",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "올리고당",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "꿀",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "매실청",
+   "category": "양념",
+   "sensitivity": "HIGH"
+  },
+  {
+   "name": "맛술",
+   "category": "주류·향 재료",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "청주",
+   "category": "주류·향 재료",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "참기름",
+   "category": "기름",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "들기름",
+   "category": "기름",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "식용유",
+   "category": "기름",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "올리브유",
+   "category": "기름",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "참깨",
+   "category": "깨·들깨",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "들깨가루",
+   "category": "깨·들깨",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "전분",
+   "category": "가루·반죽",
+   "sensitivity": "RATIO"
+  },
+  {
+   "name": "쌀",
+   "category": "곡물·면·떡",
+   "sensitivity": "RATIO"
+  },
+  {
+   "name": "밥",
+   "category": "곡물·면·떡",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "떡국떡",
+   "category": "곡물·면·떡",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "당면",
+   "category": "곡물·면·떡",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "김",
+   "category": "해조류",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "미역",
+   "category": "해조류",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "다시마",
+   "category": "해조류",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "멸치",
+   "category": "해산물",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "북어",
+   "category": "해산물",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "연어",
+   "category": "해산물",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "대구",
+   "category": "해산물",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "양파",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "대파",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "쪽파",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "마늘",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "생강",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "감자",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "고구마",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "당근",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "애호박",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "단호박",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "오이",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "양배추",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "배추",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "무",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "표고버섯",
+   "category": "버섯",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "느타리버섯",
+   "category": "버섯",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "팽이버섯",
+   "category": "버섯",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "새송이버섯",
+   "category": "버섯",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "양송이버섯",
+   "category": "버섯",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "고추",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "피망",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "시금치",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "깻잎",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "상추",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "부추",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "브로콜리",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "숙주",
+   "category": "두부·콩",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "옥수수",
+   "category": "채소",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "완두콩",
+   "category": "두부·콩",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "사과",
+   "category": "과일·견과",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "레몬",
+   "category": "과일·견과",
+   "sensitivity": "NORMAL"
+  },
+  {
+   "name": "아몬드",
+   "category": "과일·견과",
+   "sensitivity": "NORMAL"
+  }
+ ]
+}

@@ -1,0 +1,25 @@
+{
+  "status": "DRAFT",
+  "note": "행동으로 필요한 도구를 정하는 규칙 초안(사람이 아직 검증하지 않음). 웹에서 가져온 레시피는 원문이 도구를 적지 않는 경우가 많아서, 단계의 행동 종류(actionKey)로 꼭 필요한 도구를 채운다. skipCategories: 그 단계가 이미 이 분류의 도구를 쓰면 규칙을 적용하지 않는다(예: 에어프라이어로 굽는 단계에는 프라이팬·화구를 요구하지 않는다). anyOf가 하나면 그 도구를 단계의 도구로 다루고(대체 규칙·안전 문구가 그대로 적용됨), 여러 개면 그중 하나만 있으면 된다. needsStove가 true면 가스레인지 또는 인덕션도 필요하다. 단, 그 단계가 가열 기기(전자레인지·에어프라이어·오븐·전기밥솥)를 쓰면 화구를 요구하지 않는다.",
+  "verifiedBy": "DRAFT_UNVERIFIED",
+  "rules": [
+    {
+      "id": "knife",
+      "actionKeys": ["action.cut"],
+      "anyOf": ["knife"],
+      "label": "칼",
+      "reason": "재료를 써는 단계가 있어요",
+      "needsStove": false,
+      "skipCategories": ["cut"]
+    },
+    {
+      "id": "cooking_vessel",
+      "actionKeys": ["action.heat_oil", "action.stir_fry", "action.boil", "action.grill"],
+      "anyOf": ["frying_pan", "pot", "earthen_pot"],
+      "label": "프라이팬 또는 냄비",
+      "reason": "불에 올려 조리하는 단계가 있어요",
+      "needsStove": true,
+      "skipCategories": ["vessel", "heat_source"]
+    }
+  ]
+}

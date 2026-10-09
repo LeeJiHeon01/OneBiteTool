@@ -1,0 +1,203 @@
+{
+  "name": "recipe_extract",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "isRecipe",
+      "name",
+      "servings",
+      "servingsEvidence",
+      "totalMinutes",
+      "ingredients",
+      "steps"
+    ],
+    "properties": {
+      "isRecipe": {
+        "type": "boolean"
+      },
+      "name": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "servings": {
+        "type": [
+          "number",
+          "null"
+        ]
+      },
+      "servingsEvidence": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "totalMinutes": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "ingredients": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "amountText",
+            "section",
+            "evidence"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "amountText": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "section": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "evidence": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "steps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "action",
+            "actionKey",
+            "ingredientNames",
+            "toolCodes",
+            "durationSeconds",
+            "durationEvidence",
+            "timerStartCondition",
+            "heatLevel",
+            "heatRaw",
+            "deviceSettingRaw",
+            "completionCheck",
+            "evidence"
+          ],
+          "properties": {
+            "action": {
+              "type": "string"
+            },
+            "actionKey": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "action.cut",
+                "action.heat_oil",
+                "action.stir_fry",
+                "action.boil",
+                "action.add",
+                "action.mix",
+                "action.grill",
+                null
+              ]
+            },
+            "ingredientNames": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "toolCodes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "knife",
+                  "scissors",
+                  "slicer",
+                  "grater",
+                  "peeler",
+                  "pot",
+                  "frying_pan",
+                  "steamer",
+                  "earthen_pot",
+                  "microwave_container",
+                  "microwave",
+                  "air_fryer",
+                  "oven",
+                  "rice_cooker"
+                ]
+              }
+            },
+            "durationSeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "durationEvidence": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "timerStartCondition": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "heatLevel": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "OFF",
+                "LOW",
+                "MEDIUM_LOW",
+                "MEDIUM",
+                "MEDIUM_HIGH",
+                "HIGH",
+                null
+              ]
+            },
+            "heatRaw": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "deviceSettingRaw": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "completionCheck": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "evidence": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: cooking-helper-api
+  web:
+    # Error responses never include stack traces or internal messages, also with devtools.
+    error:
+      include-stacktrace: never
+      include-message: never
+      include-binding-errors: never
+  config:
+    # Local settings (database password) come from server/.env, which is never committed.
+    import: optional:file:.env[.properties]
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    # Tables are created by the migrations under db/migration only.
+    enabled: true
+    locations: classpath:db/migration
+
+# Without an API key the server skips AI calls and answers with its own step sentences.
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  model: ${OPENAI_MODEL:gpt-5-mini}
+  # Calls per day over all purposes; further requests are answered without AI.
+  daily-call-limit: ${OPENAI_DAILY_CALL_LIMIT:100}
+  timeout-seconds: 120
+
+app:
+  # Browser origins allowed to call the API (the Expo web preview). Comma separated.
+  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8081}
+  # Recipe sites tried first when a dish is brought in from the web. Comma separated.
+  preferred-recipe-sites: ${PREFERRED_RECIPE_SITES:10000recipe.com}
+

@@ -1,0 +1,110 @@
+{
+  "_readme": "도구 기준값의 원본. 서버 시작 시 tool_variant 테이블에 반영된다. 값을 바꿀 때는 이 파일만 고친다. ASSUMED 는 근거 없는 임시값이므로 출시 전 PUBLISHED(자료 검색) 또는 MEASURED(실측)로 교체한다. 출처를 찾으면 sourceRef 에 URL과 확인 날짜를 적는다. 컵의 representativeVolumeMl 은 cup 치수로 계산한 '가득 기준선까지의 용량'과 같아야 한다(서버가 시작할 때 5% 넘게 다르면 오류). 표준 계량 도구(계량스푼·계량컵)는 변환하지 않고 원래 단위를 그대로 보여주므로 용량값이 없다. 그릇(밥공기·국그릇)은 옆면이 둥글어 눈금을 계산하지 않고 '가득/반' 글자로만 안내한다.",
+  "updated": "2026-10-09",
+  "tools": [
+    {
+      "code": "spoon_rice",
+      "representativeVolumeMl": 10,
+      "valueSource": "ASSUMED",
+      "sourceRef": null,
+      "_todo": "한국 가정용 밥숟가락 액체 가득 용량 자료 검색"
+    },
+    {
+      "code": "teaspoon",
+      "representativeVolumeMl": 4,
+      "valueSource": "ASSUMED",
+      "sourceRef": null,
+      "_todo": "커피 티스푼 액체 가득 용량 자료 검색"
+    },
+    {
+      "code": "paper_cup_small",
+      "representativeVolumeMl": 193,
+      "valueSource": "ASSUMED",
+      "sourceRef": null,
+      "cup": {
+        "topDiameterMm": 70,
+        "bottomDiameterMm": 50,
+        "heightMm": 78,
+        "fillLineFromTopMm": 8
+      },
+      "_todo": "자판기 종이컵(6.5oz급) 규격: 윗지름·아랫지름·높이 검색. 가득 기준선까지의 용량을 representativeVolumeMl 로"
+    },
+    {
+      "code": "paper_cup_large",
+      "representativeVolumeMl": 419,
+      "valueSource": "ASSUMED",
+      "sourceRef": null,
+      "cup": {
+        "topDiameterMm": 90,
+        "bottomDiameterMm": 60,
+        "heightMm": 110,
+        "fillLineFromTopMm": 12
+      },
+      "_todo": "테이크아웃 종이컵(12oz급) 규격 검색"
+    },
+    {
+      "code": "glass_cup",
+      "representativeVolumeMl": 308,
+      "valueSource": "ASSUMED",
+      "sourceRef": null,
+      "cup": {
+        "topDiameterMm": 70,
+        "bottomDiameterMm": 70,
+        "heightMm": 95,
+        "fillLineFromTopMm": 15
+      },
+      "_todo": "유리컵은 제품 편차가 커서 원통형 대표값으로 둠. 화면에 '대략적인 기준' 항상 표시"
+    },
+    {
+      "code": "measuring_spoon",
+      "standardMeasure": true,
+      "representativeVolumeMl": null,
+      "valueSource": "PUBLISHED",
+      "sourceRef": "표준 계량스푼: 1큰술 15mL, 1작은술 5mL",
+      "_note": "원래 단위(큰술·작은술)를 그대로 표시"
+    },
+    {
+      "code": "measuring_cup",
+      "standardMeasure": true,
+      "representativeVolumeMl": null,
+      "valueSource": "PUBLISHED",
+      "sourceRef": "한국 요리 표준 1컵 200mL",
+      "_note": "원래 단위(컵·mL)를 그대로 표시"
+    },
+    {
+      "code": "water_bottle_500",
+      "representativeVolumeMl": 500,
+      "valueSource": "PUBLISHED",
+      "sourceRef": "제품 라벨 표기 용량",
+      "_note": "병 모양이라 눈금 계산 안 함. '가득 1병'처럼 횟수로 안내"
+    },
+    {
+      "code": "rice_bowl",
+      "representativeVolumeMl": 300,
+      "valueSource": "ASSUMED",
+      "sourceRef": null,
+      "_todo": "가정용 밥공기 가득 용량 자료 검색. 제품 편차가 커서 항상 '대략적인 기준'"
+    },
+    {
+      "code": "soup_bowl",
+      "representativeVolumeMl": 500,
+      "valueSource": "ASSUMED",
+      "sourceRef": null,
+      "_todo": "가정용 국그릇(대접) 가득 용량 자료 검색. 항상 '대략적인 기준'"
+    },
+    {
+      "code": "rice_cup",
+      "representativeVolumeMl": 160,
+      "valueSource": "ASSUMED",
+      "sourceRef": null,
+      "_todo": "국내 전기밥솥 동봉 계량컵 용량 자료 검색 (제조사별 차이 확인)"
+    },
+    {
+      "code": "soju_glass",
+      "representativeVolumeMl": 50,
+      "valueSource": "ASSUMED",
+      "sourceRef": null,
+      "_todo": "일반 소주잔 가득 용량 자료 검색"
+    }
+  ]
+}

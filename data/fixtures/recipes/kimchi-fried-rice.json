@@ -1,0 +1,27 @@
+{
+  "ref": "kimchi-fried-rice",
+  "name": "김치볶음밥",
+  "baseServings": 1,
+  "totalMinutes": 20,
+  "verificationStatus": "UNVERIFIED",
+  "ingredients": [
+    { "key": "kimchi", "ingredient": "kimchi", "name": "김치", "amount": "200g", "required": true },
+    { "key": "rice", "ingredient": "rice", "name": "밥", "amount": "1공기", "required": true },
+    { "key": "soy_sauce", "ingredient": "soy_sauce", "name": "간장", "amount": "1큰술", "required": true },
+    { "key": "sesame_oil", "ingredient": "sesame_oil", "name": "참기름", "amount": "1작은술", "required": false },
+    { "key": "cooking_oil", "ingredient": "cooking_oil", "name": "식용유", "amount": "2큰술", "required": true },
+    { "key": "green_onion", "ingredient": "green_onion", "name": "대파", "amount": "1/4대", "required": false },
+    { "key": "egg", "ingredient": "egg", "name": "계란", "amount": "1개", "required": true },
+    { "key": "sesame", "ingredient": "sesame", "name": "깨", "amount": "1작은술", "required": false }
+  ],
+  "steps": [
+    { "action": "김치를 먹기 좋게 썰어요", "actionKey": "action.cut", "ingredients": ["kimchi"], "tools": ["knife"], "durationSeconds": null, "timerStartCondition": null, "heatLevel": null, "heatRaw": null, "completionCheck": null },
+    { "action": "대파를 얇게 썰어요", "actionKey": "action.cut", "ingredients": ["green_onion"], "tools": ["knife"], "durationSeconds": null, "timerStartCondition": null, "heatLevel": null, "heatRaw": null, "completionCheck": null },
+    { "action": "팬에 식용유를 두르고 달궈요", "actionKey": "action.heat_oil", "ingredients": ["cooking_oil"], "tools": ["frying_pan"], "durationSeconds": null, "timerStartCondition": null, "heatLevel": "MEDIUM", "heatRaw": "중불", "completionCheck": null },
+    { "action": "썰어 둔 재료를 넣고 저어가며 볶으세요", "actionKey": "action.stir_fry", "ingredients": ["kimchi", "green_onion"], "tools": ["frying_pan"], "durationSeconds": 180, "timerStartCondition": "볶기 시작할 때 눌러주세요", "heatLevel": "MEDIUM", "heatRaw": "중불", "completionCheck": "김치 숨이 죽고 국물이 줄어들면 다음으로 가세요." },
+    { "action": "밥과 간장을 넣고 골고루 섞어요", "actionKey": "action.stir_fry", "ingredients": ["rice", "soy_sauce"], "tools": ["frying_pan"], "durationSeconds": 120, "timerStartCondition": "밥과 간장을 넣은 뒤 눌러주세요", "heatLevel": "MEDIUM_LOW", "heatRaw": "중약불", "completionCheck": "재료가 골고루 섞이면 다음으로 가세요." },
+    { "action": "계란을 풀어 넣으세요", "actionKey": "action.stir_fry", "ingredients": ["egg"], "tools": ["frying_pan"], "durationSeconds": null, "timerStartCondition": null, "heatLevel": "LOW", "heatRaw": "약불", "completionCheck": null },
+    { "action": "참기름을 한 바퀴 둘러요", "actionKey": "action.add", "ingredients": ["sesame_oil"], "tools": [], "durationSeconds": null, "timerStartCondition": null, "heatLevel": "LOW", "heatRaw": "약불", "completionCheck": null },
+    { "action": "깨를 뿌려요", "actionKey": "action.add", "ingredients": ["sesame"], "tools": [], "durationSeconds": null, "timerStartCondition": null, "heatLevel": null, "heatRaw": null, "completionCheck": null }
+  ]
+}

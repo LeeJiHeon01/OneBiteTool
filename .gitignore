@@ -1,0 +1,28 @@
+# Secrets: real values live in .env files only
+.env
+.env.*
+!.env.example
+
+# IDE and OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Build output and dependencies
+node_modules/
+build/
+dist/
+.gradle/
+.expo/
+
+# Tool output
+.playwright-mcp/
+
+# Not development material: kept on this PC only
+Claude Code 세팅 가이드 (공유용).md
+docs/archive/
+진행상황.md
+docs/release-roadmap.md
+docs/allergen-review.md

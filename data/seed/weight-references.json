@@ -1,0 +1,9 @@
+{
+  "status": "DRAFT",
+  "note": "무게(g)를 도구 기준으로 바꾸기 위한 환산 기준(weight_reference 테이블로 동기화). '이 재료를 이 도구에 가득 담으면 약 몇 g'인지 적는다. g와 mL는 재료마다 달라서 계산으로 구할 수 없고, 값이 없는 재료는 변환하지 않는다. 지금 값은 모두 ASSUMED(근거 없는 대략값)이며, AI 검색으로 채울 때도 사람이 확인한 뒤 PUBLISHED 또는 MEASURED로 바꾼다.",
+  "references": [
+    { "ingredient": "kimchi", "tool": "rice_bowl", "unitLabel": "밥공기 1번", "grams": 200, "sizeNote": "먹기 좋게 썬 것", "valueSource": "ASSUMED", "sourceRef": null },
+    { "ingredient": "rice", "tool": "rice_bowl", "unitLabel": "밥공기 1번", "grams": 210, "sizeNote": "한 공기", "valueSource": "ASSUMED", "sourceRef": null },
+    { "ingredient": "pork", "tool": "rice_bowl", "unitLabel": "밥공기 1번", "grams": 250, "sizeNote": "한입 크기로 썬 것", "valueSource": "ASSUMED", "sourceRef": null }
+  ]
+}

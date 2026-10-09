@@ -1,0 +1,40 @@
+{
+  "name": "recipe_search",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "candidates"
+    ],
+    "properties": {
+      "candidates": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "url",
+            "title",
+            "reason",
+            "needsOtherTools"
+          ],
+          "properties": {
+            "url": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "needsOtherTools": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    }
+  }
+}

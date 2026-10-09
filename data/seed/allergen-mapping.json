@@ -1,0 +1,1842 @@
+{
+  "status": "AI_RESEARCHED",
+  "note": "재료→알레르기 매핑(ingredient_allergen 테이블과 ingredient의 검토 등급으로 동기화). 알레르기 코드는 allergen.code다. hidden은 숨은 성분(간장→대두·밀). productVaries는 제품마다 성분이 달라 흔한 성분을 모두 넣은 가공 재료다. 검토 등급: verifiedBy에 확인한 사람 이름이 있으면 HUMAN_VERIFIED, reviewLevel이 AI_RESEARCHED이면 공개 자료 기반 AI 조사(사람이 확인한 것이 아님, 출시 전 사람 확인 필요: docs/release-roadmap.md P2-12), 둘 다 아니면 등급 없음이다. 1차에서는 HUMAN_VERIFIED와 AI_RESEARCHED를 확인된 매핑으로 쓰고, 등급 없는 재료와 여기 없는 재료는 \"알레르기 확인 필요\"로 표시한다. allergens가 빈 배열이면 \"표시 대상 알레르기 없음으로 조사됨\"이다. verifiedBy는 사람만 채운다.",
+  "mappings": [
+    {
+      "ingredient": "egg",
+      "allergens": [
+        {
+          "code": "egg",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "quail_egg",
+      "allergens": [
+        {
+          "code": "egg",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "알류(가금류의 알)",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "milk",
+      "allergens": [
+        {
+          "code": "milk",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "butter",
+      "allergens": [
+        {
+          "code": "milk",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "cheese",
+      "allergens": [
+        {
+          "code": "milk",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "cream",
+      "allergens": [
+        {
+          "code": "milk",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "yogurt",
+      "allergens": [
+        {
+          "code": "milk",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "pork",
+      "allergens": [
+        {
+          "code": "pork",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "chicken",
+      "allergens": [
+        {
+          "code": "chicken",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "beef",
+      "allergens": [
+        {
+          "code": "beef",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "mackerel",
+      "allergens": [
+        {
+          "code": "mackerel",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "crab",
+      "allergens": [
+        {
+          "code": "crab",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "shrimp",
+      "allergens": [
+        {
+          "code": "shrimp",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "salted_shrimp",
+      "allergens": [
+        {
+          "code": "shrimp",
+          "hidden": true
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "새우로 만든 젓갈",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "squid",
+      "allergens": [
+        {
+          "code": "squid",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "clam",
+      "allergens": [
+        {
+          "code": "shellfish",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "식약처 기준 조개류에 굴·전복·홍합 포함",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "peach",
+      "allergens": [
+        {
+          "code": "peach",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "tomato",
+      "allergens": [
+        {
+          "code": "tomato",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "ketchup",
+      "allergens": [
+        {
+          "code": "tomato",
+          "hidden": true
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "walnut",
+      "allergens": [
+        {
+          "code": "walnut",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "pine_nut",
+      "allergens": [
+        {
+          "code": "pine_nut",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "peanut",
+      "allergens": [
+        {
+          "code": "peanut",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "tofu",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "fried_tofu",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": true
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "두부를 튀긴 것",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "soybeans",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "대두류. 완두·강낭콩·녹두는 대두가 아님 → 별도",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "soybean_sprout",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": true
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "대두를 키운 나물. 보수적으로 대두 표시",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "soy_milk",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "flour",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "buckwheat_noodle",
+      "allergens": [
+        {
+          "code": "buckwheat",
+          "hidden": true
+        },
+        {
+          "code": "wheat",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "시판 메밀면은 대부분 밀가루를 섞음",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "soy_sauce",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "wheat",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "양조간장은 대두·밀 원료. 국간장은 대두·소금만인 제품도 있으나 보수적으로 밀 포함",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "doenjang",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "wheat",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "대두 원료. 시판 제품 다수에 밀 포함",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "gochujang",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "시판 고추장 다수가 밀쌀·대두 사용",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "ssamjang",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "wheat",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "chunjang",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "wheat",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "oyster_sauce",
+      "allergens": [
+        {
+          "code": "shellfish",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "wheat",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "굴 추출물(조개류) + 간장 성분",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "tuna_extract",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "wheat",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "간장 베이스 제품이 많음. 가다랑어는 표시 대상 아님",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "mayonnaise",
+      "allergens": [
+        {
+          "code": "egg",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "난황 + 대두유 사용 제품 다수",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "curry_powder",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "milk",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "pork",
+          "hidden": true
+        },
+        {
+          "code": "chicken",
+          "hidden": true
+        },
+        {
+          "code": "beef",
+          "hidden": true
+        },
+        {
+          "code": "tomato",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "시판 카레는 제품마다 육류·우유·토마토 포함 여부가 다름. 보수적으로 모두 표시",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "jjajang_powder",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "pork",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "dasida",
+      "allergens": [
+        {
+          "code": "beef",
+          "hidden": true
+        },
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "제품명에 따라 원료 육류가 다름",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "chicken_stock",
+      "allergens": [
+        {
+          "code": "chicken",
+          "hidden": true
+        },
+        {
+          "code": "milk",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "wheat",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "ramen_soup_base",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "beef",
+          "hidden": true
+        },
+        {
+          "code": "pork",
+          "hidden": true
+        },
+        {
+          "code": "chicken",
+          "hidden": true
+        },
+        {
+          "code": "shrimp",
+          "hidden": true
+        },
+        {
+          "code": "milk",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "제품마다 다름. 보수적으로 흔한 성분 모두",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "bread_crumbs",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "milk",
+          "hidden": true
+        },
+        {
+          "code": "egg",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "pancake_mix",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "egg",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "frying_mix",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "egg",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "soybean_oil",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": true
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "대두로 만든 기름",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "wine",
+      "allergens": [
+        {
+          "code": "sulfite",
+          "hidden": true
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "보존료로 아황산류 사용 흔함",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "raisin",
+      "allergens": [
+        {
+          "code": "sulfite",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "dried_fruit",
+      "allergens": [
+        {
+          "code": "sulfite",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "kimchi",
+      "allergens": [
+        {
+          "code": "shrimp",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "새우젓 사용이 흔함. 굴·멸치액젓을 쓰는 경우도 있음(멸치는 표시 대상 아님)",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "fish_cake",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "egg",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "생선살 + 밀가루·전분. 생선 종류는 대부분 표시 대상 아님",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "crab_stick",
+      "allergens": [
+        {
+          "code": "crab",
+          "hidden": true
+        },
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "egg",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "게 추출물 첨가 제품이 많음",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "ham",
+      "allergens": [
+        {
+          "code": "pork",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "milk",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "sausage",
+      "allergens": [
+        {
+          "code": "pork",
+          "hidden": true
+        },
+        {
+          "code": "chicken",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "milk",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "bacon",
+      "allergens": [
+        {
+          "code": "pork",
+          "hidden": true
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "canned_tuna",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "참치는 표시 대상 아님. 대두유 사용 제품이 많음",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "wheat_noodle",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "밀가루 면",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "pasta",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "egg",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "듀럼밀. 생면은 계란 포함",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "ramen",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "beef",
+          "hidden": true
+        },
+        {
+          "code": "pork",
+          "hidden": true
+        },
+        {
+          "code": "chicken",
+          "hidden": true
+        },
+        {
+          "code": "shrimp",
+          "hidden": true
+        },
+        {
+          "code": "milk",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "면(밀)+스프. 제품마다 다름",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "wheat_rice_cake",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "bread",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "milk",
+          "hidden": true
+        },
+        {
+          "code": "egg",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "dumpling",
+      "allergens": [
+        {
+          "code": "wheat",
+          "hidden": true
+        },
+        {
+          "code": "pork",
+          "hidden": true
+        },
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "beef",
+          "hidden": true
+        },
+        {
+          "code": "chicken",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "mixed_nuts",
+      "allergens": [
+        {
+          "code": "walnut",
+          "hidden": true
+        },
+        {
+          "code": "peanut",
+          "hidden": true
+        },
+        {
+          "code": "pine_nut",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "water",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "salt",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "sugar",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "pepper",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "gochugaru",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "vinegar",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "oligo_syrup",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "honey",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "plum_syrup",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "cooking_wine",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "일부 제품은 아황산류가 있을 수 있으나 일반적으로 표시 대상 없음",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "cheongju",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "sesame_oil",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "perilla_oil",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "cooking_oil",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": true
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "대두유(콩기름)는 별도 항목으로 대두 표시",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "olive_oil",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "sesame",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "참깨는 표시 대상 19종에 없음",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "perilla_powder",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "starch",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "raw_rice",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "rice",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "rice_cake",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "glass_noodle",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "gim",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "조미김은 기름·소금만 쓰는 제품이 일반적",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "miyeok",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "dasima",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "anchovy",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "멸치·멸치액젓은 표시 대상 아님",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "dried_pollack",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "salmon",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "표시 대상 아님",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "cod",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "표시 대상 아님",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "onion",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "green_onion",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "'파'는 대파로 본다",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "chives",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "garlic",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "ginger",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "potato",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "sweet_potato",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "carrot",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "zucchini",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "kabocha",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "cucumber",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "cabbage",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "napa_cabbage",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "radish",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "shiitake",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "oyster_mushroom",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "enoki",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "king_oyster_mushroom",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "button_mushroom",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "chili",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "bell_pepper",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "spinach",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "perilla_leaf",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "lettuce",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "garlic_chives",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "broccoli",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "mung_bean_sprout",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "corn",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "green_pea",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "apple",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "lemon",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": null,
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "almond",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "표시 대상 19종에 없음(호두·잣·땅콩만 해당)",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "fish_sauce",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "'멸치'의 별칭에서 분리. 멸치(국물용)는 NORMAL, 액젓은 짠 양념이라 HIGH. 멸치·까나리는 알레르기 표시 대상 아님",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "sesame_salt",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-09",
+      "note": "'참깨'의 별칭에서 분리. 소금이 섞여 간에 영향",
+      "verifiedBy": null,
+      "verifiedAt": null
+    }
+  ]
+}

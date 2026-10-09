@@ -1,0 +1,13 @@
+{
+  "status": "DRAFT",
+  "note": "생략·대체 규칙 초안(adaptation_rule, tool_substitution_rule 테이블로 동기화). verifiedBy가 DRAFT_UNVERIFIED인 것은 사람이 아직 검증하지 않은 규칙이다. recipeRef는 고정 레시피의 ref이고 null이면 모든 레시피에 적용한다. 같은 재료의 규칙은 priority가 작은 것부터 시도하며, 적용할 규칙이 없으면 조리 불가다(spec 2.2). 알레르기 재료의 대체에는 쓰지 않는다.",
+  "ingredientRules": [
+    { "type": "SUBSTITUTE", "ingredient": "sesame_oil", "substitute": "perilla_oil", "impact": null, "recipeRef": "kimchi-fried-rice", "priority": 1, "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" },
+    { "type": "OMIT", "ingredient": "sesame_oil", "substitute": null, "impact": "고소한 향이 약해질 수 있어요.", "recipeRef": "kimchi-fried-rice", "priority": 2, "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" },
+    { "type": "OMIT", "ingredient": "green_onion", "substitute": null, "impact": "향이 조금 약해질 수 있어요.", "recipeRef": "kimchi-fried-rice", "priority": 1, "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" },
+    { "type": "OMIT", "ingredient": "sesame", "substitute": null, "impact": null, "recipeRef": null, "priority": 1, "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" }
+  ],
+  "toolRules": [
+    { "requiredTool": "knife", "substituteTool": "scissors", "conditionNote": "김치·대파처럼 가위로 잘리는 재료만", "recipeRef": "kimchi-fried-rice", "extraSafetyNote": null, "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" }
+  ]
+}

@@ -1,0 +1,28 @@
+# 로컬 개발용 PostgreSQL
+# 실행: 프로젝트 루트에서 `docker compose up -d`
+# 중지: `docker compose down` (데이터 유지) / 데이터까지 삭제: `docker compose down -v`
+# 이미 PC에 PostgreSQL을 설치해 연결했다면 이 파일은 필요 없다.
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: cooking-helper-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cooking_helper}
+      POSTGRES_USER: ${POSTGRES_USER:-cooking_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 를 .env 에 설정하세요}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+      TZ: UTC
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cooking_app} -d ${POSTGRES_DB:-cooking_helper}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:

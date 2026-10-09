@@ -1,0 +1,18 @@
+{
+  "status": "DRAFT",
+  "note": "안전 주의사항 초안(safety_rule 테이블로 동기화). verifiedBy가 DRAFT_UNVERIFIED인 것은 사람이 아직 검증하지 않은 문구다. 검증하면 검증자 이름과 날짜로 바꾼다. triggerType: TOOL(도구 code), ACTION(단계의 action_key), INGREDIENT(재료 code), HEAT(불 세기). placement: STEP / SUMMARY / BOTH. detailForLow는 실력 LOW에게만 덧붙인다.",
+  "rules": [
+    { "code": "knife_fingers", "triggerType": "TOOL", "triggerValue": "knife", "message": "칼을 쓸 때는 손가락을 조심하세요.", "detailForLow": "재료를 잡은 손은 손끝을 안쪽으로 말아 쥐면 덜 위험해요.", "placement": "STEP", "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" },
+    { "code": "scissors_fingers", "triggerType": "TOOL", "triggerValue": "scissors", "message": "가위 날에 손이 닿지 않게 조심하세요.", "detailForLow": "재료는 그릇 위에서 잘라 넣으면 편해요.", "placement": "STEP", "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" },
+    { "code": "hot_oil_dry_pan", "triggerType": "ACTION", "triggerValue": "action.heat_oil", "message": "팬에 물기가 없는지 확인하세요.", "detailForLow": "물기가 있으면 뜨거운 기름이 튀어요. 키친타월로 닦고 시작하세요.", "placement": "STEP", "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" },
+    { "code": "hot_oil_splash", "triggerType": "ACTION", "triggerValue": "action.stir_fry", "message": "뜨거운 기름이 튈 수 있어요.", "detailForLow": "재료는 팬 가까이에서 살살 넣고, 얼굴을 팬 위로 가져가지 마세요.", "placement": "BOTH", "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" },
+    { "code": "pork_cook_through", "triggerType": "INGREDIENT", "triggerValue": "pork", "message": "돼지고기는 속까지 완전히 익혀 주세요.", "detailForLow": "가장 두꺼운 부분을 잘라 붉은 기가 없는지 확인하세요.", "placement": "BOTH", "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" },
+    { "code": "microwave_no_metal", "triggerType": "TOOL", "triggerValue": "microwave", "message": "전자레인지에는 금속 용기를 넣지 마세요.", "detailForLow": "숟가락이나 은박지도 금속이에요. 전자레인지용 용기만 쓰세요.", "placement": "BOTH", "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" },
+    { "code": "slicer_hand_guard", "triggerType": "TOOL", "triggerValue": "slicer", "message": "손 보호대를 쓰고, 재료가 짧아지면 끝까지 밀지 마세요.", "detailForLow": "재료가 손가락 두 마디보다 짧아지면 남은 부분은 칼이나 가위로 자르세요.", "placement": "BOTH", "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-09T00:00:00Z" },
+    { "code": "grater_hand_guard", "triggerType": "TOOL", "triggerValue": "grater", "message": "손 보호대를 쓰고, 재료가 짧아지면 끝까지 밀지 마세요.", "detailForLow": "재료가 손가락 두 마디보다 짧아지면 남은 부분은 칼이나 가위로 자르세요.", "placement": "BOTH", "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-09T00:00:00Z" },
+    { "code": "oven_hot", "triggerType": "TOOL", "triggerValue": "oven", "message": "오븐 장갑을 끼고, 문을 열 때 얼굴을 떼세요.", "detailForLow": "예열 중이거나 쓰고 난 직후에는 오븐 안쪽과 선반에 손이 닿지 않게 하세요.", "placement": "BOTH", "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-09T00:00:00Z" },
+    { "code": "steamer_steam", "triggerType": "TOOL", "triggerValue": "steamer", "message": "뚜껑을 열 때 김에 데지 않게 몸 쪽 반대로 여세요.", "detailForLow": "뚜껑을 내 몸에서 먼 쪽부터 들어 올리면 김이 반대편으로 빠져요.", "placement": "BOTH", "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-09T00:00:00Z" },
+    { "code": "earthen_pot_hot", "triggerType": "TOOL", "triggerValue": "earthen_pot", "message": "불에서 내린 뒤에도 오래 뜨거워요. 맨손으로 잡지 마세요.", "detailForLow": "옮길 때는 두꺼운 장갑이나 받침을 쓰고, 식탁에는 냄비 받침을 먼저 놓으세요.", "placement": "BOTH", "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-09T00:00:00Z" },
+    { "code": "air_fryer_basket", "triggerType": "TOOL", "triggerValue": "air_fryer", "message": "바스켓을 꺼낼 때 손잡이만 잡으세요.", "detailForLow": "바스켓 안쪽과 본체 안은 조리 직후 매우 뜨거워요.", "placement": "BOTH", "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-09T00:00:00Z" }
+  ]
+}
