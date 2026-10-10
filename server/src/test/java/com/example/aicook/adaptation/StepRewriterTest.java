@@ -123,16 +123,16 @@ class StepRewriterTest {
     void stepWithTwoActionsBecomesOneStepPerAction() {
         FakeClient client = new FakeClient(answer(
                 rewrite("S1", "김치를 먹기 좋은 크기로 썰어요", null),
-                split("S2", part("김치를 넣어요", null, "action.add"), part("김치를 볶아요", null, "action.stir_fry"))));
+                split("S2", part("김치를 볶아요", null, "action.stir_fry"), part("김치를 접시에 덜어요", null, "action.add"))));
 
         List<AdaptedStep> steps = rewrite(client, SkillLevel.LOW);
 
         assertThat(steps).extracting(AdaptedStep::action)
-                .containsExactly("김치를 먹기 좋은 크기로 썰어요", "김치를 넣어요", "김치를 볶아요");
+                .containsExactly("김치를 먹기 좋은 크기로 썰어요", "김치를 볶아요", "김치를 접시에 덜어요");
         assertThat(steps).extracting(AdaptedStep::order).containsExactly(1, 2, 3);
         assertThat(steps).extracting(AdaptedStep::stepId).containsExactly("S1", "S2-1", "S2-2");
-        AdaptedStep adding = steps.get(1);
-        AdaptedStep frying = steps.get(2);
+        AdaptedStep frying = steps.get(1);
+        AdaptedStep adding = steps.get(2);
         // No time or heat is made up: they stay with the action they were given for.
         assertThat(adding.durationSeconds()).isNull();
         assertThat(adding.heatLevel()).isNull();
@@ -142,27 +142,117 @@ class StepRewriterTest {
         assertThat(frying.completionCheck()).isEqualTo(FRY.completionCheck());
         assertThat(frying.actionKey()).isEqualTo("action.stir_fry");
         assertThat(adding.actionKey()).isEqualTo("action.add");
-        // Ingredients, tools and safety notes are kept on every part.
+        // Both sentences name the ingredient, so both keep it; tools stay on every part.
         for (AdaptedStep part : List.of(adding, frying)) {
             assertThat(part.ingredientIds()).isEqualTo(FRY.ingredientIds());
             assertThat(part.toolIds()).isEqualTo(FRY.toolIds());
-            assertThat(part.safetyNotes()).isEqualTo(FRY.safetyNotes());
             assertThat(part.mergedFromStepIds()).containsExactly("S2");
         }
+        // Without the rules to check a part against, every caution of the step stays.
+        assertThat(frying.safetyNotes()).isEqualTo(FRY.safetyNotes());
+        assertThat(adding.safetyNotes()).isEqualTo(FRY.safetyNotes());
+    }
+
+    @Test
+    void puttingInAndCookingAtOnceIsOneStep() {
+        FakeClient client = new FakeClient(answer(
+                rewrite("S1", "김치를 먹기 좋은 크기로 썰어요", null),
+                split("S2", part("김치를 넣고 볶아요", null, "action.add", "action.stir_fry"))));
+
+        List<AdaptedStep> steps = rewrite(client, SkillLevel.LOW);
+
+        assertThat(steps).hasSize(2);
+        assertThat(steps.get(1).action()).isEqualTo("김치를 넣고 볶아요");
+        // Counted as the cooking alone: time, heat and the check stay where they were.
+        assertThat(steps.get(1).actionKey()).isEqualTo(FRY.actionKey());
+        assertThat(steps.get(1).durationSeconds()).isEqualTo(FRY.durationSeconds());
+        assertThat(steps.get(1).heatLevel()).isEqualTo(FRY.heatLevel());
+        assertThat(client.calls).isEqualTo(1);
+    }
+
+    @Test
+    void addingSplitOffRightBeforeCookingIsRejected() {
+        // "넣어요" then "볶아요" for one ingredient only makes more steps for the same thing.
+        FakeClient client = new FakeClient(answer(
+                rewrite("S1", "김치를 먹기 좋은 크기로 썰어요", null),
+                split("S2", part("김치를 넣어요", null, "action.add"), part("김치를 볶아요", null, "action.stir_fry"))));
+
+        List<AdaptedStep> steps = rewrite(client, SkillLevel.LOW);
+
+        assertThat(steps).hasSize(2);
+        assertThat(steps.get(1)).isEqualTo(FRY);
+    }
+
+    @Test
+    void manyIngredientsGoingInAtOnceAreAStepOfTheirOwn() {
+        List<String> ids = List.of("ING_KIMCHI", "ING_A", "ING_B", "ING_C", "ING_D");
+        List<AdaptedIngredient> five = ids.stream()
+                .map(id -> new AdaptedIngredient(id, id.equals("ING_KIMCHI") ? "김치" : "재료" + id.substring(4),
+                        new Original(null, null, "약간"), new Display(null, null, null, "약간", false), null,
+                        Sensitivity.NORMAL, false))
+                .toList();
+        AdaptedStep stew = new AdaptedStep("S9", 1, "재료를 모두 넣고 끓인다", "action.boil", null, ids,
+                List.of("frying_pan"), List.of(), 300, null, HeatLevel.MEDIUM, null, null, null, null, List.of(),
+                List.of());
+        String together = answer(split("S9", part("재료를 모두 넣고 끓여요", null, "action.add", "action.boil")));
+        String apart = answer(split("S9", part("재료를 모두 넣어요", null, "action.add"),
+                part("끓여요", null, "action.boil")));
+
+        // Five ingredients in one go: "put in and cook" as one sentence is not accepted.
+        List<AdaptedStep> kept = new StepRewriter(new FakeClient(together, together), REFERENCE)
+                .rewrite(SkillLevel.LOW, List.of(stew), five, List.of());
+        assertThat(kept).containsExactly(stew);
+
+        List<AdaptedStep> split = new StepRewriter(new FakeClient(apart), REFERENCE)
+                .rewrite(SkillLevel.LOW, List.of(stew), five, List.of());
+        assertThat(split).extracting(AdaptedStep::action).containsExactly("재료를 모두 넣어요", "끓여요");
+        assertThat(split.get(0).durationSeconds()).isNull();
+        assertThat(split.get(1).durationSeconds()).isEqualTo(300);
+    }
+
+    @Test
+    void ingredientsAndCautionsFollowThePartThatHandlesThem() {
+        AdaptedIngredient kimchi = INGREDIENTS.get(0);
+        AdaptedIngredient sugar = new AdaptedIngredient("ING_SUGAR", "설탕", new Original(null, null, "약간"),
+                new Display(null, null, null, "약간", false), null, Sensitivity.HIGH, false);
+        AdaptedIngredient oil = new AdaptedIngredient("ING_OIL", "기름", new Original(null, null, "약간"),
+                new Display(null, null, null, "약간", false), null, Sensitivity.NORMAL, false);
+        SafetyNote splash = new SafetyNote("뜨거운 기름이 튈 수 있어요.", null);
+        AdaptedStep step = new AdaptedStep("S7", 1, "김치를 볶다가 설탕을 넣는다", "action.stir_fry", null,
+                List.of("ING_KIMCHI", "ING_SUGAR", "ING_OIL"), List.of("frying_pan"), List.of(), null, null,
+                HeatLevel.MEDIUM, null, null, null, null, List.of(splash), List.of());
+        FakeClient client = new FakeClient(answer(split("S7",
+                part("김치를 볶아요", null, "action.stir_fry"), part("설탕을 넣어요", null, "action.add"))));
+        // The server's own rule: the oil caution belongs to frying.
+        StepRewriter.PartNotes byAction = (original, partActionKey, partIngredientIds, anchor, partActionKeys) ->
+                "action.stir_fry".equals(partActionKey) ? List.of(splash) : List.of();
+
+        List<AdaptedStep> steps = new StepRewriter(client, REFERENCE)
+                .rewrite(SkillLevel.LOW, List.of(step), List.of(kimchi, sugar, oil), List.of(), byAction);
+
+        AdaptedStep frying = steps.get(0);
+        AdaptedStep adding = steps.get(1);
+        assertThat(frying.safetyNotes()).containsExactly(splash);
+        // No heat, no oil caution on "설탕을 넣어요".
+        assertThat(adding.safetyNotes()).isEmpty();
+        assertThat(adding.heatLevel()).isNull();
+        // An ingredient goes to the part that names it; one that no part names stays on every part.
+        assertThat(frying.ingredientIds()).containsExactly("ING_KIMCHI", "ING_OIL");
+        assertThat(adding.ingredientIds()).containsExactly("ING_SUGAR", "ING_OIL");
     }
 
     @Test
     void sentenceWithTwoMainActionsIsRejectedAndAskedAgain() {
         String twoInOne = answer(
                 rewrite("S1", "김치를 먹기 좋은 크기로 썰어요", null),
-                split("S2", part("김치를 넣고 볶아요", null, "action.add", "action.stir_fry")));
+                split("S2", part("김치를 볶고 섞어요", null, "action.stir_fry", "action.mix")));
         String fixed = answer(
                 rewrite("S1", "김치를 먹기 좋은 크기로 썰어요", null),
-                split("S2", part("김치를 넣어요", null, "action.add"), part("김치를 볶아요", null, "action.stir_fry")));
+                split("S2", part("김치를 볶아요", null, "action.stir_fry"), part("김치를 섞어요", null, "action.mix")));
 
         FakeClient retried = new FakeClient(twoInOne, fixed);
         assertThat(rewrite(retried, SkillLevel.LOW)).extracting(AdaptedStep::action)
-                .containsExactly("김치를 먹기 좋은 크기로 썰어요", "김치를 넣어요", "김치를 볶아요");
+                .containsExactly("김치를 먹기 좋은 크기로 썰어요", "김치를 볶아요", "김치를 섞어요");
         assertThat(retried.calls).isEqualTo(2);
 
         // Still two actions after the retry: the server's own sentence stays, unsplit.

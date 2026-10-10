@@ -12,11 +12,12 @@
     { "ingredient": "sesame", "names": [], "when": "ALWAYS", "message": "없어도 괜찮아요" },
     { "ingredient": "sesame_salt", "names": [], "when": "ALWAYS", "message": "없어도 괜찮아요" },
     { "ingredient": "pepper", "names": [], "when": "ALWAYS", "message": "없어도 괜찮아요" },
-    { "ingredient": "gim", "names": ["김가루"], "when": "ALWAYS", "message": "없어도 괜찮아요" },
+    { "ingredient": "gim_flakes", "names": [], "when": "ALWAYS", "message": "없어도 괜찮아요" },
+    { "ingredient": "parsley", "names": [], "when": "ALWAYS", "message": "장식용이라 없어도 돼요" },
     { "ingredient": "chives", "names": [], "when": "PLATING", "message": "장식용이라 없어도 돼요" },
     { "ingredient": "green_onion", "names": [], "when": "PLATING", "message": "장식용이라 없어도 돼요" },
-    { "ingredient": "chili", "names": ["홍고추"], "when": "ALWAYS", "message": "색을 내는 재료라 없어도 돼요" },
-    { "ingredient": "chili", "names": ["청양고추"], "when": "ALWAYS", "message": "매운맛이 줄어요" },
+    { "ingredient": "red_chili", "names": [], "when": "ALWAYS", "message": "색을 내는 재료라 없어도 돼요" },
+    { "ingredient": "cheongyang_chili", "names": [], "when": "ALWAYS", "message": "매운맛이 줄어요" },
     { "ingredient": "sesame_oil", "names": [], "when": "FINISHING", "message": "고소한 맛이 조금 줄어요" }
   ],
   "ingredientRules": [

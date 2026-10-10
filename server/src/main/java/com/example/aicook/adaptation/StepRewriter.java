@@ -3,6 +3,7 @@ package com.example.aicook.adaptation;
 import com.example.aicook.adaptation.AdaptationResponse.AdaptedIngredient;
 import com.example.aicook.adaptation.AdaptationResponse.AdaptedStep;
 import com.example.aicook.adaptation.AdaptationResponse.Change;
+import com.example.aicook.adaptation.AdaptationResponse.SafetyNote;
 import com.example.aicook.ai.OpenAiClient;
 import com.example.aicook.ai.OpenAiClient.Purpose;
 import com.example.aicook.common.Json;
@@ -38,6 +39,16 @@ class StepRewriter {
     private static final String PROMPT = "recipe-adapt";
     private static final int MAX_ATTEMPTS = 2;
     private static final int MAX_PARTS = 3;
+    private static final String ADD_ACTION = "action.add";
+    /** Adding this many ingredients at once is a step of its own, even right before heating. */
+    private static final int MANY_INGREDIENTS = 5;
+
+    /** Works out the safety notes of one part of a split step with the server's own rules. */
+    @FunctionalInterface
+    interface PartNotes {
+        List<SafetyNote> of(AdaptedStep step, String partActionKey, List<String> partIngredientIds, boolean anchor,
+                            List<String> partActionKeys);
+    }
     private static final Map<HeatLevel, String> HEAT_LABELS = Map.of(HeatLevel.LOW, "약불",
             HeatLevel.MEDIUM_LOW, "중약불", HeatLevel.MEDIUM, "중불", HeatLevel.MEDIUM_HIGH, "중강불",
             HeatLevel.HIGH, "강불");
@@ -48,11 +59,30 @@ class StepRewriter {
     record Rewrite(String stepId, List<Part> parts) {
     }
 
-    /** actionKeys are the main actions the sentence holds; exactly one is allowed. */
+    /**
+     * actionKeys are the main actions the sentence holds. One is allowed, or "put in and cook":
+     * adding followed at once by an action over heat counts as that heated action alone
+     * ("김치를 넣고 끓여요" is boiling; what goes in is the step's ingredient list).
+     */
     record Part(String action, List<String> actionKeys, String details) {
 
+        /** The single main action, or null when the sentence holds more than one. */
         String actionKey() {
-            return actionKeys.get(0);
+            if (actionKeys == null || actionKeys.isEmpty() || actionKeys.contains(null)) {
+                return null;
+            }
+            if (actionKeys.size() == 1) {
+                return actionKeys.get(0);
+            }
+            if (!addsAndHeats()) {
+                return null;
+            }
+            return actionKeys.stream().filter(ToolNeeds::isHeatingAction).findFirst().orElse(null);
+        }
+
+        boolean addsAndHeats() {
+            return actionKeys != null && actionKeys.size() == 2 && actionKeys.contains(ADD_ACTION)
+                    && actionKeys.stream().anyMatch(ToolNeeds::isHeatingAction);
         }
     }
 
@@ -68,6 +98,13 @@ class StepRewriter {
 
     List<AdaptedStep> rewrite(SkillLevel skillLevel, List<AdaptedStep> steps, List<AdaptedIngredient> ingredients,
                               List<Change> changes) {
+        // Without the rules to check a part against, every caution of the step stays on each part.
+        return rewrite(skillLevel, steps, ingredients, changes,
+                (step, partActionKey, partIngredientIds, anchor, partActionKeys) -> step.safetyNotes());
+    }
+
+    List<AdaptedStep> rewrite(SkillLevel skillLevel, List<AdaptedStep> steps, List<AdaptedIngredient> ingredients,
+                              List<Change> changes, PartNotes partNotes) {
         if (steps.isEmpty() || !client.isAvailable()) {
             return steps;
         }
@@ -86,7 +123,7 @@ class StepRewriter {
         log.info("AI rewrite accepted for {} of {} steps", accepted.size(), steps.size());
         List<AdaptedStep> result = steps.stream()
                 .flatMap(step -> Optional.ofNullable(accepted.get(step.stepId()))
-                        .map(rewrite -> applied(step, rewrite.parts()))
+                        .map(rewrite -> applied(step, rewrite.parts(), ingredientsById, partNotes))
                         .orElse(List.of(step)).stream())
                 .toList();
         if (result.size() == steps.size()) {
@@ -101,20 +138,48 @@ class StepRewriter {
     }
 
     /** One step per accepted part; with a single part only the wording changes. */
-    private static List<AdaptedStep> applied(AdaptedStep step, List<Part> parts) {
+    private static List<AdaptedStep> applied(AdaptedStep step, List<Part> parts,
+                                             Map<String, AdaptedIngredient> ingredientsById, PartNotes partNotes) {
         if (parts.size() == 1) {
             return List.of(step.withText(parts.get(0).action(), parts.get(0).details()));
         }
         int anchor = anchorOf(step, parts);
+        List<String> partKeys = parts.stream().map(Part::actionKey).toList();
+        List<List<String>> ingredientIds = ingredientsOfParts(step, parts, ingredientsById);
         List<AdaptedStep> steps = new ArrayList<>();
         for (int index = 0; index < parts.size(); index++) {
             Part part = parts.get(index);
             boolean keepsTimer = index == anchor;
             // The source gave one heat level for the whole step: it also holds for its other heated actions.
             boolean keepsHeat = keepsTimer || ToolNeeds.isHeatingAction(part.actionKey());
-            steps.add(step.partOf(index + 1, part.action(), part.actionKey(), part.details(), keepsTimer, keepsHeat));
+            List<SafetyNote> notes = partNotes.of(step, part.actionKey(), ingredientIds.get(index), keepsTimer, partKeys);
+            steps.add(step.partOf(index + 1, part.action(), part.actionKey(), part.details(), keepsTimer, keepsHeat,
+                    ingredientIds.get(index), notes));
         }
         return steps;
+    }
+
+    /**
+     * Which ingredients each part handles: the ones its sentence names. An ingredient no part names
+     * stays on every part, so its allergy warning and cautions are never lost.
+     */
+    private static List<List<String>> ingredientsOfParts(AdaptedStep step, List<Part> parts,
+                                                         Map<String, AdaptedIngredient> ingredientsById) {
+        List<List<String>> named = parts.stream().map(part -> namedIn(step, part, ingredientsById)).toList();
+        List<String> unplaced = step.ingredientIds().stream()
+                .filter(id -> named.stream().noneMatch(ids -> ids.contains(id)))
+                .toList();
+        return named.stream()
+                .map(ids -> step.ingredientIds().stream()
+                        .filter(id -> ids.contains(id) || unplaced.contains(id))
+                        .toList())
+                .toList();
+    }
+
+    private static List<String> namedIn(AdaptedStep step, Part part, Map<String, AdaptedIngredient> ingredientsById) {
+        return step.ingredientIds().stream()
+                .filter(id -> ingredientsById.containsKey(id) && part.action().contains(ingredientsById.get(id).name()))
+                .toList();
     }
 
     /**
@@ -128,6 +193,29 @@ class StepRewriter {
             }
         }
         return parts.size() - 1;
+    }
+
+    /** Ingredients the part's sentence names; when it names none, all of the step's. */
+    private static int addedCount(AdaptedStep step, Part part, Map<String, AdaptedIngredient> ingredientsById) {
+        int named = namedIn(step, part, ingredientsById).size();
+        return named == 0 ? step.ingredientIds().size() : named;
+    }
+
+    /**
+     * "넣어요" right before an action over heat belongs to that action unless many ingredients go
+     * in at once: splitting it off only makes more steps for the same thing.
+     */
+    private static boolean splitsAddFromHeat(AdaptedStep step, List<Part> parts,
+                                             Map<String, AdaptedIngredient> ingredientsById) {
+        for (int index = 0; index + 1 < parts.size(); index++) {
+            Part part = parts.get(index);
+            Part next = parts.get(index + 1);
+            if (ADD_ACTION.equals(part.actionKey()) && ToolNeeds.isHeatingAction(next.actionKey())
+                    && addedCount(step, part, ingredientsById) < MANY_INGREDIENTS) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** A step joined from several steps, or holding a checklist, is already one action and is not split. */
@@ -181,7 +269,7 @@ class StepRewriter {
         for (int index = 0; index < steps.size(); index++) {
             AdaptedStep step = steps.get(index);
             Rewrite rewrite = normalize(rewrites.get(index), skillLevel);
-            if (isValid(step, rewrite, allowedNames(step, ingredientsById))) {
+            if (isValid(step, rewrite, allowedNames(step, ingredientsById), ingredientsById)) {
                 accepted.put(step.stepId(), rewrite);
             }
         }
@@ -193,22 +281,27 @@ class StepRewriter {
      * device setting may only be split when exactly one part carries the step's own action, so
      * the server knows where those values belong.
      */
-    private boolean isValid(AdaptedStep step, Rewrite rewrite, List<String> allowedNames) {
+    private boolean isValid(AdaptedStep step, Rewrite rewrite, List<String> allowedNames,
+                            Map<String, AdaptedIngredient> ingredientsById) {
         List<Part> parts = rewrite.parts();
         if (parts == null || parts.isEmpty() || parts.size() > MAX_PARTS) {
             return false;
         }
         for (Part part : parts) {
-            // Two main actions in one sentence break "one action per step".
-            if (part.actionKeys() == null || part.actionKeys().size() != 1 || part.actionKey() == null
+            // Two main actions in one sentence break "one action per step" ("put in and cook" is one).
+            if (part.actionKey() == null
                     || !validator.accepts(step.action(), allowedNames, part.action(), part.details())) {
+                return false;
+            }
+            // Many ingredients going in at once are a step of their own.
+            if (part.addsAndHeats() && addedCount(step, part, ingredientsById) >= MANY_INGREDIENTS) {
                 return false;
             }
         }
         if (parts.size() == 1) {
             return true;
         }
-        if (!canSplit(step)) {
+        if (!canSplit(step) || splitsAddFromHeat(step, parts, ingredientsById)) {
             return false;
         }
         long anchors = parts.stream().filter(part -> part.actionKey().equals(step.actionKey())).count();

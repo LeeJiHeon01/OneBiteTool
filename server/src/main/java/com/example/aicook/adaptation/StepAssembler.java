@@ -4,12 +4,14 @@ import com.example.aicook.adaptation.AdaptationResponse.AdaptedStep;
 import com.example.aicook.adaptation.AdaptationResponse.SafetyNote;
 import com.example.aicook.adaptation.IngredientPlanner.Kind;
 import com.example.aicook.recipe.Recipe;
+import com.example.aicook.recipe.Recipe.HeatLevel;
 import com.example.aicook.recipe.Recipe.SkillLevel;
 import com.example.aicook.recipe.ToolNeeds;
 import com.example.aicook.reference.ReferenceData;
 import com.example.aicook.reference.Rules.SafetyRule;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,8 +29,23 @@ class StepAssembler {
     /** Particle pairs that follow a noun: the one used after a final consonant, then the other. */
     private static final String[][] PARTICLES = {{"을", "를"}, {"은", "는"}, {"이", "가"}, {"과", "와"}};
 
-    record Result(List<AdaptedStep> steps, List<String> safetySummary) {
+    /**
+     * @param contexts step id -> what the safety rules were checked against, kept so the rules can
+     *                 be checked again for one action of the step when the step is split
+     */
+    record Result(List<AdaptedStep> steps, List<String> safetySummary, Map<String, StepContext> contexts) {
     }
+
+    /** toolNotes: cautions written on a tool substitution rule, with the recipe tool they belong to. */
+    record StepContext(SkillLevel skillLevel, List<String> toolIds, Map<String, String> codeByIngredientId,
+                       boolean heating, HeatLevel heatLevel, List<ToolNote> toolNotes) {
+    }
+
+    record ToolNote(String toolId, SafetyNote note) {
+    }
+
+    private static final String CUT_ACTION = "action.cut";
+    private static final String CUT_CATEGORY = "cut";
 
     private final ReferenceData reference;
 
@@ -39,6 +56,7 @@ class StepAssembler {
     Result assemble(Recipe recipe, Conditions conditions, IngredientPlanner.Plan ingredients, ToolPlanner.Plan tools) {
         List<AdaptedStep> steps = new ArrayList<>();
         Set<String> summary = new LinkedHashSet<>();
+        Map<String, StepContext> contexts = new LinkedHashMap<>();
 
         for (Recipe.Step step : recipe.steps()) {
             List<String> keptIngredientIds = step.ingredientIds().stream()
@@ -54,7 +72,17 @@ class StepAssembler {
             rules.stream().filter(rule -> rule.placement().onSummary()).forEach(rule -> summary.add(rule.message()));
 
             List<SafetyNote> notes = new ArrayList<>(toNotes(rules, conditions.skillLevel()));
-            notes.addAll(substitutionNotes(recipeToolIds, tools));
+            List<ToolNote> toolNotes = substitutionNotes(recipeToolIds, tools);
+            toolNotes.forEach(toolNote -> notes.add(toolNote.note()));
+            Map<String, String> codes = new LinkedHashMap<>();
+            keptIngredientIds.forEach(id -> {
+                String code = effectiveDictionaryCode(recipe, id, ingredients);
+                if (code != null) {
+                    codes.put(id, code);
+                }
+            });
+            contexts.put(step.id(), new StepContext(conditions.skillLevel(), toolIds, codes,
+                    isHeatingStep(step, toolIds), step.heatLevel(), toolNotes));
             // details stays empty here; StepRewriter adds the per-skill explanation.
             steps.add(new AdaptedStep(step.id(), steps.size() + 1, actionOf(recipe, step, ingredients),
                     step.actionKey(), null,
@@ -63,7 +91,52 @@ class StepAssembler {
                     heatVisualKey(step, conditions.heatSource()),
                     step.completionCheck(), notes, List.of(), List.of(), step.durationMaxSeconds()));
         }
-        return new Result(steps, List.copyOf(summary));
+        return new Result(steps, List.copyOf(summary), contexts);
+    }
+
+    /**
+     * Safety notes of one action of a step that is shown as several steps. Every rule is checked
+     * again for that action alone: by its action, by the ingredients it handles and by whether it
+     * is cooked over heat. A rule about a tool cannot be placed on one action (the tools belong to
+     * the whole step), so it stays on every part; a cutting tool goes to the cutting part when
+     * there is one.
+     *
+     * @param partIngredientIds ingredients handled in this part (those the server could not place are on every part)
+     * @param anchor            the part that carries the step's own action, time and heat
+     * @param partActionKeys    the actions of all parts of the step
+     */
+    List<SafetyNote> partNotes(StepContext context, String partActionKey, List<String> partIngredientIds,
+                               boolean anchor, List<String> partActionKeys) {
+        boolean heated = ToolNeeds.isHeatingAction(partActionKey) || (anchor && context.heating());
+        boolean hasCutPart = partActionKeys.contains(CUT_ACTION);
+        Set<String> codes = partIngredientIds.stream()
+                .map(context.codeByIngredientId()::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        List<SafetyRule> rules = reference.safetyRules().stream()
+                .filter(rule -> !rule.requiresHeat() || heated)
+                .filter(rule -> switch (rule.triggerType()) {
+                    case ACTION -> rule.triggerValue().equals(partActionKey);
+                    case INGREDIENT -> codes.contains(rule.triggerValue());
+                    case HEAT -> heated && context.heatLevel() != null
+                            && rule.triggerValue().equals(context.heatLevel().name());
+                    case TOOL -> context.toolIds().contains(rule.triggerValue())
+                            && onThisPart(rule.triggerValue(), partActionKey, hasCutPart);
+                })
+                .toList();
+        List<SafetyNote> notes = new ArrayList<>(toNotes(rules, context.skillLevel()));
+        context.toolNotes().stream()
+                .filter(toolNote -> onThisPart(toolNote.toolId(), partActionKey, hasCutPart))
+                .forEach(toolNote -> notes.add(toolNote.note()));
+        return notes.stream().distinct().toList();
+    }
+
+    /** A knife caution belongs to the cutting part when the step has one; any other tool caution stays on all parts. */
+    private boolean onThisPart(String toolId, String partActionKey, boolean hasCutPart) {
+        boolean cuttingTool = reference.toolCategories().stream()
+                .filter(category -> CUT_CATEGORY.equals(category.id()))
+                .anyMatch(category -> category.variants().stream().anyMatch(variant -> variant.id().equals(toolId)));
+        return !(cuttingTool && hasCutPart) || CUT_ACTION.equals(partActionKey);
     }
 
     /** Replaces the name of a substituted ingredient in the step text and fixes the particle after it. */
@@ -162,11 +235,11 @@ class StepAssembler {
     }
 
     /** Extra caution written on a tool substitution rule, shown on the steps that use the substitute. */
-    private List<SafetyNote> substitutionNotes(List<String> recipeToolIds, ToolPlanner.Plan tools) {
+    private List<ToolNote> substitutionNotes(List<String> recipeToolIds, ToolPlanner.Plan tools) {
         return recipeToolIds.stream()
                 .map(toolId -> tools.substitutions().get(toolId))
                 .filter(rule -> rule != null && rule.extraSafetyNote() != null)
-                .map(rule -> new SafetyNote(rule.extraSafetyNote(), null))
+                .map(rule -> new ToolNote(rule.requiredToolId(), new SafetyNote(rule.extraSafetyNote(), null)))
                 .toList();
     }
 }

@@ -135,17 +135,19 @@ public record AdaptationResponse(String id, Status status, RecipeBadge recipeBad
         }
 
         /**
-         * One action of this step when it is shown as several steps. Ingredients, tools and safety
-         * notes are kept on every part. Only the part that carries the step's own action keeps
-         * the timer and the check; heat stays on that part and on other parts cooked over heat.
+         * One action of this step when it is shown as several steps. Only the part that carries
+         * the step's own action keeps the timer and the check; heat stays on that part and on other
+         * parts cooked over heat. The ingredients and safety notes of the part are decided by the
+         * server for that part (an ingredient or a caution the server cannot place stays on all).
          */
         AdaptedStep partOf(int number, String partAction, String partActionKey, String partDetails,
-                           boolean keepsTimer, boolean keepsHeat) {
+                           boolean keepsTimer, boolean keepsHeat, List<String> partIngredientIds,
+                           List<SafetyNote> partSafetyNotes) {
             return new AdaptedStep(stepId + "-" + number, order, partAction, partActionKey, partDetails,
-                    ingredientIds, toolIds, visualKeys, keepsTimer ? durationSeconds : null,
+                    partIngredientIds, toolIds, visualKeys, keepsTimer ? durationSeconds : null,
                     keepsTimer ? timerStartCondition : null, keepsHeat ? heatLevel : null,
                     keepsHeat ? heatRaw : null, keepsTimer ? deviceSettingRaw : null,
-                    keepsHeat ? heatVisualKey : null, keepsTimer ? completionCheck : null, safetyNotes,
+                    keepsHeat ? heatVisualKey : null, keepsTimer ? completionCheck : null, partSafetyNotes,
                     mergedFromStepIds.isEmpty() ? List.of(stepId) : mergedFromStepIds, List.of(),
                     keepsTimer ? durationMaxSeconds : null);
         }

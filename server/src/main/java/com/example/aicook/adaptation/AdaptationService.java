@@ -84,11 +84,22 @@ public class AdaptationService {
         List<Change> changes = concat(ingredientPlan.changes(), toolPlan.changes());
         List<AdaptedIngredient> ingredients = adaptIngredients(recipe, conditions, ingredientPlan);
         // The same action on several ingredients in a row is shown as one step; the stored recipe stays as it is.
-        List<AdaptedStep> joinedSteps = StepMerger.mergePlating(StepMerger.merge(steps.steps(), ingredients.stream()
-                .collect(Collectors.toMap(AdaptedIngredient::ingredientId, AdaptedIngredient::name))));
-        // The AI only rewords the finished steps; amounts, time, heat and safety notes are final here.
-        List<AdaptedStep> rewordedSteps = stepRewriter.rewrite(conditions.skillLevel(), joinedSteps, ingredients,
-                changes);
+        Map<String, String> ingredientNames = ingredients.stream()
+                .collect(Collectors.toMap(AdaptedIngredient::ingredientId, AdaptedIngredient::name));
+        List<AdaptedStep> joinedSteps = StepMerger.mergePlating(StepMerger.merge(steps.steps(), ingredientNames));
+        // The AI rewords the finished steps and shows a step with several actions as one step per
+        // action. Amounts, time and heat are final here; the safety notes of a part are worked out
+        // again by the server's own rules for that part.
+        StepRewriter.PartNotes partNotes = (step, partActionKey, partIngredientIds, anchor, partActionKeys) ->
+                Optional.ofNullable(steps.contexts().get(step.stepId()))
+                        .map(context -> stepAssembler.partNotes(context, partActionKey, partIngredientIds, anchor,
+                                partActionKeys))
+                        // Nothing to check the rules against: every caution of the step stays.
+                        .orElse(step.safetyNotes());
+        List<AdaptedStep> splitSteps = stepRewriter.rewrite(conditions.skillLevel(), joinedSteps, ingredients,
+                changes, partNotes);
+        // "넣어요" steps that now follow one another and differ only in the ingredient are joined again.
+        List<AdaptedStep> rewordedSteps = StepMerger.merge(splitSteps, ingredientNames);
         return new AdaptationResponse(newId(), status, RecipeService.badgeOf(recipe), recipe.sourceUrl(),
                 allergyWarnings(recipe, conditions, ingredientPlan),
                 allergyCheckNeeded(recipe, conditions, ingredientPlan), List.of(), changes, List.of(),

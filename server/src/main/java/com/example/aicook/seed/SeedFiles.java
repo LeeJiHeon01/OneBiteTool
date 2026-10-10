@@ -99,8 +99,9 @@ final class SeedFiles {
     record FixtureIngredient(String key, String ingredient, String name, String amount, boolean required) {
     }
 
+    /** durationMaxSeconds is the long end of a time range ("3~4분"); left out when the time is not a range. */
     record FixtureStep(String action, String actionKey, List<String> ingredients, List<String> tools,
-                       Integer durationSeconds, String timerStartCondition, String heatLevel, String heatRaw,
-                       String deviceSettingRaw, String completionCheck) {
+                       Integer durationSeconds, Integer durationMaxSeconds, String timerStartCondition,
+                       String heatLevel, String heatRaw, String deviceSettingRaw, String completionCheck) {
     }
 }

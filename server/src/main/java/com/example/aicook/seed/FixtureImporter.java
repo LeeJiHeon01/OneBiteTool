@@ -50,13 +50,33 @@ public class FixtureImporter {
 
     void importAll() {
         for (FixtureRecipe fixture : readFixtures()) {
-            if (findRecipeId(fixture.ref()).isPresent()) {
+            Optional<String> stored = findRecipeId(fixture.ref());
+            if (stored.isPresent()) {
+                syncTimeRanges(stored.get(), fixture);
                 continue;
             }
             String recipeId = insertRecipe(fixture);
             Map<String, String> ingredientIds = insertIngredients(recipeId, fixture);
             insertSteps(recipeId, fixture, ingredientIds);
             log.info("Imported fixture recipe {}", fixture.ref());
+        }
+    }
+
+    /** A fixture stored before time ranges existed gets the long end of its ranges; nothing else is touched. */
+    private void syncTimeRanges(String recipeId, FixtureRecipe fixture) {
+        int order = 1;
+        for (FixtureStep step : fixture.steps()) {
+            jdbc.sql("""
+                            UPDATE recipe_step SET duration_max_seconds = :durationMax
+                            WHERE recipe_id = :recipeId AND step_order = :order
+                              AND duration_seconds IS NOT DISTINCT FROM :duration
+                              AND duration_max_seconds IS DISTINCT FROM :durationMax
+                            """)
+                    .param("durationMax", step.durationMaxSeconds())
+                    .param("duration", step.durationSeconds())
+                    .param("recipeId", recipeId)
+                    .param("order", order++)
+                    .update();
         }
     }
 
@@ -164,10 +184,10 @@ public class FixtureImporter {
         for (FixtureStep step : fixture.steps()) {
             String stepId = jdbc.sql("""
                             INSERT INTO recipe_step (recipe_id, step_order, action_ko, action_key, duration_seconds,
-                                                     timer_start_condition, heat_level, heat_raw, device_setting_raw,
-                                                     completion_check)
-                            VALUES (:recipeId, :order, :action, :actionKey, :duration, :timerStart, :heatLevel,
-                                    :heatRaw, :deviceSettingRaw, :completionCheck)
+                                                     duration_max_seconds, timer_start_condition, heat_level,
+                                                     heat_raw, device_setting_raw, completion_check)
+                            VALUES (:recipeId, :order, :action, :actionKey, :duration, :durationMax, :timerStart,
+                                    :heatLevel, :heatRaw, :deviceSettingRaw, :completionCheck)
                             RETURNING id
                             """)
                     .param("recipeId", recipeId)
@@ -175,6 +195,7 @@ public class FixtureImporter {
                     .param("action", step.action())
                     .param("actionKey", step.actionKey())
                     .param("duration", step.durationSeconds())
+                    .param("durationMax", step.durationMaxSeconds())
                     .param("timerStart", step.timerStartCondition())
                     .param("heatLevel", step.heatLevel())
                     .param("heatRaw", step.heatRaw())

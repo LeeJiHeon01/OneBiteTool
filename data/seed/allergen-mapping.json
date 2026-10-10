@@ -1699,6 +1699,55 @@
       "verifiedAt": null
     },
     {
+      "ingredient": "red_chili",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-10",
+      "note": "'고추'의 별칭에서 분리. 고추는 표시 대상 19종에 없음",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "cheongyang_chili",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-10",
+      "note": "'고추'의 별칭에서 분리. 고추는 표시 대상 19종에 없음",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "gim_flakes",
+      "allergens": [
+        {
+          "code": "soybean",
+          "hidden": true
+        },
+        {
+          "code": "wheat",
+          "hidden": true
+        }
+      ],
+      "productVaries": true,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-10",
+      "note": "'김'의 별칭에서 분리. 조미 김가루는 기름·소금·설탕·참깨가 일반적이나 간장(대두·밀)으로 맛을 낸 제품이 있어 보수적으로 포함. 김은 새우·게가 섞여 들어갈 수 있다는 주의 문구가 붙는 제품이 있음(혼입 가능성은 매핑에 넣지 않음)",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "parsley",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-10",
+      "note": "파슬리는 표시 대상 19종에 없음",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
       "ingredient": "bell_pepper",
       "allergens": [],
       "productVaries": false,

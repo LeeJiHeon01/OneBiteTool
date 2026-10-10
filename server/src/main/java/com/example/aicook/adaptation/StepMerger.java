@@ -171,7 +171,12 @@ final class StepMerger {
         List<String> ingredientIds = run.stream().flatMap(step -> step.ingredientIds().stream()).distinct().toList();
         Set<SafetyNote> notes = new LinkedHashSet<>();
         run.forEach(step -> notes.addAll(step.safetyNotes()));
-        return first.mergedWith(order, action, ingredientIds, List.copyOf(notes),
-                run.stream().map(AdaptedStep::stepId).toList());
+        // A part of a split step already names the recipe step it came from.
+        List<String> sourceIds = run.stream()
+                .flatMap(step -> step.mergedFromStepIds().isEmpty()
+                        ? java.util.stream.Stream.of(step.stepId()) : step.mergedFromStepIds().stream())
+                .distinct()
+                .toList();
+        return first.mergedWith(order, action, ingredientIds, List.copyOf(notes), sourceIds);
     }
 }
