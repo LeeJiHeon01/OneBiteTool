@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { ToastProvider } from '@/components/toast';
 import { AppStateProvider } from '@/state/app-state';
 import { colors } from '@/theme/tokens';
 
@@ -28,7 +29,9 @@ export default function RootLayout() {
   return (
     <AppStateProvider>
       <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.white } }} />
+      <ToastProvider>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.white } }} />
+      </ToastProvider>
     </AppStateProvider>
   );
 }

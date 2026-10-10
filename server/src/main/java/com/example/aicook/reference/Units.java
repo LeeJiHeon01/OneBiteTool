@@ -16,14 +16,18 @@ import java.util.stream.Collectors;
  *
  * @param volumeTools       containers to try after cups for a plain volume, in order
  *                          (the water bottle before bowls)
+ * @param pourChoiceToleranceRatio when an amount this close to the source exists, only amounts
+ *                          this close compete for "fewest pours" (provisional value)
+ * @param toolCounters      counter word of a container that is counted itself ("생수병 1병")
  * @param customVolumeTools tools whose volume the user may measure against a water bottle (spec 4.8)
  * @param customVolumeMinMl smallest user-measured volume the server accepts
  * @param customVolumeMaxMl largest user-measured volume the server accepts
  */
 public record Units(List<VolumeUnit> volumeUnits, List<String> weightUnits, List<String> vagueWords,
                     List<String> volumeTools, double normalToleranceRatio,
-                    double ratioToleranceRatio, List<String> customVolumeTools, double customVolumeMinMl,
-                    double customVolumeMaxMl) {
+                    double ratioToleranceRatio, double pourChoiceToleranceRatio,
+                    Map<String, String> toolCounters,
+                    List<String> customVolumeTools, double customVolumeMinMl, double customVolumeMaxMl) {
 
     private static final Set<String> KILOGRAM_UNITS = Set.of("kg", "킬로그램");
 
@@ -81,6 +85,11 @@ public record Units(List<VolumeUnit> volumeUnits, List<String> weightUnits, List
         return toolId != null && volumeMl != null && customVolumeTools != null
                 && customVolumeTools.contains(toolId)
                 && volumeMl >= customVolumeMinMl && volumeMl <= customVolumeMaxMl;
+    }
+
+    /** Counter word for a tool that is counted itself (병 for a bottle); empty for cups and bowls. */
+    public Optional<String> counterOf(String toolId) {
+        return toolCounters == null ? Optional.empty() : Optional.ofNullable(toolCounters.get(toolId));
     }
 
     public boolean isWeightUnit(String unit) {

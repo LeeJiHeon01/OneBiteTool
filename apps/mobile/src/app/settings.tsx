@@ -27,7 +27,7 @@ function Row({ label, value, onPress }: { label: string; value?: string; onPress
 }
 
 export default function SettingsScreen() {
-  const { skillLevel, toolIds, allergenCodes, cookRecords, clearAll } = useAppState();
+  const { skillLevel, toolIds, allergenCodes, cookRecords, timerNotificationEnabled, clearAll } = useAppState();
   const [deleteSheet, setDeleteSheet] = useState(false);
   const edit = (pathname: '/onboarding/level' | '/onboarding/tools' | '/onboarding/allergy') => () =>
     router.push({ pathname, params: { edit: '1' } } as Href);
@@ -57,9 +57,12 @@ export default function SettingsScreen() {
         <View style={styles.divider} />
         <Row label="내 요리 기록" onPress={() => router.push('/history' as Href)} value={`${cookRecords.length}개`} />
         <View style={styles.divider} />
-        {/* Notification settings and app info screens are not designed yet. */}
-        <Row label="알림 설정" />
-        <Row label="앱 정보" />
+        <Row
+          label="알림 설정"
+          onPress={() => router.push('/notification-settings' as Href)}
+          value={timerNotificationEnabled ? '켜짐' : '꺼짐'}
+        />
+        <Row label="앱 정보" onPress={() => router.push('/about' as Href)} />
         <View style={styles.divider} />
         <Pressable accessibilityRole="button" onPress={() => setDeleteSheet(true)} style={styles.row}>
           <AppText weight="bold" style={styles.delete}>

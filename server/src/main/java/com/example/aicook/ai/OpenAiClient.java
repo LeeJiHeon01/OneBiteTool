@@ -60,11 +60,16 @@ public class OpenAiClient {
         if (apiKey.isBlank()) {
             return false;
         }
-        if (callLog.countToday() >= dailyCallLimit) {
+        if (isDailyLimitReached()) {
             log.warn("Daily AI call limit of {} reached", dailyCallLimit);
             return false;
         }
         return true;
+    }
+
+    /** True when a key is configured but today's calls are used up: the AI works again tomorrow. */
+    public boolean isDailyLimitReached() {
+        return !apiKey.isBlank() && callLog.countToday() >= dailyCallLimit;
     }
 
     /**

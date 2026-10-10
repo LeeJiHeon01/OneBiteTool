@@ -27,6 +27,7 @@ import {
 } from '@/data/tool-volume';
 import { loadJson, saveJson } from '@/state/device-store';
 import { loadProfile, saveProfile } from '@/state/profile-storage';
+import { setTimerNotificationsEnabled } from '@/state/timer-notifications';
 import { useTimer } from '@/state/use-timer';
 
 // App state. The profile (skill, tools, allergies) is kept on the device and restored at
@@ -35,6 +36,7 @@ import { useTimer } from '@/state/use-timer';
 const RECENT_QUERIES_KEY = 'recent-queries.v1';
 const FAVORITES_KEY = 'favorites.v1';
 const COOK_HISTORY_KEY = 'cook-history.v1';
+const SETTINGS_KEY = 'settings.v1';
 
 function toggleIn(list: string[], value: string): string[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
@@ -209,6 +211,30 @@ function useLibrary() {
   };
 }
 
+// App settings that are not about the user: kept on the device, on by default.
+function useSettings() {
+  const [timerNotificationEnabled, setTimerNotificationEnabled] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    loadJson<{ timerNotification?: unknown }>(SETTINGS_KEY, {}).then((stored) => {
+      setTimerNotificationEnabled(stored.timerNotification !== false);
+      setLoaded(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    saveJson(SETTINGS_KEY, { timerNotification: timerNotificationEnabled });
+    // Turning it off also cancels a notification that is already scheduled.
+    setTimerNotificationsEnabled(timerNotificationEnabled);
+  }, [loaded, timerNotificationEnabled]);
+
+  const clearSettings = useCallback(() => setTimerNotificationEnabled(true), []);
+
+  return { timerNotificationEnabled, setTimerNotificationEnabled, clearSettings };
+}
+
 function useRecipeSession(profile: ReturnType<typeof useProfile>) {
   const { skillLevel, toolIds, customToolVolumes, heatSource, allergenCodes } = profile;
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -306,9 +332,11 @@ function useAppStateValue() {
   const profile = useProfile();
   const session = useRecipeSession(profile);
   const library = useLibrary();
+  const settings = useSettings();
   const timer = useTimer();
   const { clearProfile } = profile;
   const { clearLibrary } = library;
+  const { clearSettings } = settings;
   const { clearSession, setCookStepIndex } = session;
   const { cancel } = timer;
 
@@ -322,10 +350,11 @@ function useAppStateValue() {
     clearProfile();
     clearSession();
     clearLibrary();
+    clearSettings();
     cancel();
-  }, [clearProfile, clearSession, clearLibrary, cancel]);
+  }, [clearProfile, clearSession, clearLibrary, clearSettings, cancel]);
 
-  return { ...profile, ...session, ...library, timer, resetCooking, clearAll };
+  return { ...profile, ...session, ...library, ...settings, timer, resetCooking, clearAll };
 }
 
 type AppState = ReturnType<typeof useAppStateValue>;

@@ -86,6 +86,10 @@ public class RecipeImportService {
         if (existing.isPresent()) {
             return existing.get();
         }
+        if (client.isDailyLimitReached()) {
+            throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "AI_DAILY_LIMIT",
+                    "오늘은 새 레시피를 더 찾을 수 없어요. 내일 다시 시도해 주세요.");
+        }
         if (!client.isAvailable()) {
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "AI_UNAVAILABLE",
                     "지금은 새 레시피를 찾을 수 없어요. 잠시 후 다시 시도해 주세요.");

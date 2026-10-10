@@ -279,6 +279,14 @@ class RecipeImportServiceTest {
                     assertThat(exception.code()).isEqualTo("AI_UNAVAILABLE");
                 });
         client.available = true;
+        // Today's calls are used up: a different code, so the app can say "try again tomorrow".
+        client.dailyLimitReached = true;
+        assertThatThrownBy(() -> service.start(new ImportRequest(DISH, List.of())))
+                .isInstanceOfSatisfying(ApiException.class, exception -> {
+                    assertThat(exception.status()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+                    assertThat(exception.code()).isEqualTo("AI_DAILY_LIMIT");
+                });
+        client.dailyLimitReached = false;
         assertThatThrownBy(() -> service.start(new ImportRequest("  ", List.of())))
                 .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.code()).isEqualTo("INVALID_QUERY"));
         assertThatThrownBy(() -> service.start(new ImportRequest(DISH, List.of("no_such_tool"))))
@@ -361,6 +369,7 @@ class RecipeImportServiceTest {
         private final Deque<String> answers = new ArrayDeque<>();
         private final List<Map<String, Object>> inputs = new ArrayList<>();
         private boolean available = true;
+        private boolean dailyLimitReached;
         private int calls;
 
         FakeClient() {
@@ -369,7 +378,12 @@ class RecipeImportServiceTest {
 
         @Override
         public boolean isAvailable() {
-            return available;
+            return available && !dailyLimitReached;
+        }
+
+        @Override
+        public boolean isDailyLimitReached() {
+            return dailyLimitReached;
         }
 
         @Override

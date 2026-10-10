@@ -6,8 +6,10 @@ import { HeatIndicator } from '@/components/heat-indicator';
 import { Icon } from '@/components/icon';
 import { Checkbox } from '@/components/checkbox';
 import { AllergyBanner, SafetyNote } from '@/components/notes';
+import { StepReportSheet, type ReportReason } from '@/components/step-report-sheet';
 import { StepTimer } from '@/components/step-timer';
 import { AppText } from '@/components/text';
+import { useToast } from '@/components/toast';
 import { type AdaptedStep } from '@/data/recipe';
 import { type AllergyMatch } from '@/data/allergy';
 import { type HeatSource } from '@/data/catalog';
@@ -25,6 +27,11 @@ type Props = {
 export function CookStep({ step, heatSource, allergyMatches }: Props) {
   const hasBanner = allergyMatches.length > 0;
   const [speaking, setSpeaking] = useState(false);
+  const [reporting, setReporting] = useState(false);
+  const showToast = useToast();
+
+  // TODO(spec): 신고 API — 서버 계약(spec §8)에 신고가 없어 고른 사유를 아직 보내지 않는다.
+  const sendReport = (_reason: ReportReason) => showToast('알려주셔서 고마워요');
   // Ticks are only a reminder for the user; moving on never depends on them.
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
   const toggleItem = (id: string) =>
@@ -69,6 +76,17 @@ export function CookStep({ step, heatSource, allergyMatches }: Props) {
         <AppText weight="extraBold" style={styles.actionLabel}>
           {step.actionLabel}
         </AppText>
+        <Pressable
+          accessibilityLabel="이 단계가 이상해요"
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={() => setReporting(true)}
+          style={styles.more}
+        >
+          <AppText weight="extraBold" style={styles.moreLabel}>
+            ⋯
+          </AppText>
+        </Pressable>
         <Pressable
           accessibilityLabel={speaking ? '읽기 멈추기' : '이 단계 읽어주기'}
           accessibilityRole="button"
@@ -148,6 +166,7 @@ export function CookStep({ step, heatSource, allergyMatches }: Props) {
           <SafetyNote key={message} large message={message} title="조심하세요" />
         ))}
       </View>
+      <StepReportSheet onClose={() => setReporting(false)} onSend={sendReport} visible={reporting} />
     </>
   );
 }
@@ -178,6 +197,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   speakOn: { backgroundColor: colors.primary },
+  more: {
+    position: 'absolute',
+    left: 12,
+    top: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moreLabel: { fontSize: 22, lineHeight: 26, color: colors.primary },
   instruction: {
     marginTop: 24,
     marginBottom: 20,

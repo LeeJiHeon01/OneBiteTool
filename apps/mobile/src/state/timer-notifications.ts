@@ -21,6 +21,29 @@ if (supported) {
   });
 }
 
+// The user's own switch (settings > 알림 설정). Off: nothing is scheduled; the screen timer still runs.
+let enabled = true;
+
+export function setTimerNotificationsEnabled(next: boolean) {
+  enabled = next;
+  if (!next) cancelTimerEnd();
+}
+
+// denied: turned off in the device settings; unsupported: this build cannot notify (web preview).
+export type NotificationPermission = 'granted' | 'denied' | 'undetermined' | 'unsupported' | 'unknown';
+
+// Only looks at the current state; permission is asked when a timer is first started.
+export async function timerNotificationPermission(): Promise<NotificationPermission> {
+  if (!supported) return 'unsupported';
+  try {
+    const current = await Notifications.getPermissionsAsync();
+    if (current.granted) return 'granted';
+    return current.canAskAgain ? 'undetermined' : 'denied';
+  } catch {
+    return 'unknown';
+  }
+}
+
 // Schedule and cancel calls run one after another, in the order the user acted.
 let queue: Promise<void> = Promise.resolve();
 
@@ -62,7 +85,7 @@ async function replaceScheduled(seconds: number | null, stepNumber: number) {
 
 // Called on start, resume and restart: the earlier notification is replaced, never added to.
 export function scheduleTimerEnd(seconds: number, stepNumber: number) {
-  if (supported) enqueue(() => replaceScheduled(seconds, stepNumber));
+  if (supported && enabled) enqueue(() => replaceScheduled(seconds, stepNumber));
 }
 
 // Called on pause, cancel and when a new recipe starts.

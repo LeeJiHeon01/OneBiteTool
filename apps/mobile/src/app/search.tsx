@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { errorMessage } from '@/api/client';
+import { ApiError } from '@/api/client';
 import { importRecipe, searchRecipes, type ImportJob } from '@/api/recipes';
 import { Badge } from '@/components/badge';
 import { Button } from '@/components/button';
@@ -13,6 +13,7 @@ import { Picture } from '@/components/picture';
 import { AppText } from '@/components/text';
 import { TopBar } from '@/components/top-bar';
 import { hiddenSummary, splitByVisibility } from '@/data/allergy-visibility';
+import { errorView } from '@/data/error-view';
 import { ILLUSTRATIONS } from '@/data/images';
 import { type RecipeBadge, type SearchResult } from '@/data/recipe';
 import { missingToolsLabel, TOOL_FIT_OK_BADGE } from '@/data/tool-fit';
@@ -154,7 +155,8 @@ export default function SearchScreen() {
   const [phase, setPhase] = useState<Phase>('searching');
   const [attempt, setAttempt] = useState(0);
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [message, setMessage] = useState('');
+  // Why the search failed (ApiError code); decides what the error screen says.
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [showHidden, setShowHidden] = useState(false);
   const [importStatus, setImportStatus] = useState<ImportJob['status']>('PENDING');
   // Set when the user stops waiting: the app stops asking, the server keeps working.
@@ -184,7 +186,7 @@ export default function SearchScreen() {
         setPhase(imported ? 'results' : 'noResults');
       } catch (error) {
         if (gaveUp()) return;
-        setMessage(errorMessage(error));
+        setErrorCode(error instanceof ApiError ? error.code : null);
         setPhase('error');
       }
     };
@@ -218,7 +220,7 @@ export default function SearchScreen() {
       await openRecipe(result.id);
       router.push('/recipe');
     } catch (error) {
-      setMessage(errorMessage(error));
+      setErrorCode(error instanceof ApiError ? error.code : null);
       setPhase('error');
     }
   };
@@ -270,13 +272,24 @@ export default function SearchScreen() {
   }
 
   if (phase === 'error') {
+    // No connection, today's limit and a server problem each get their own words.
+    const view = errorView(errorCode);
     return (
-      <Page footer={<Button label="다시 시도" onPress={retry} />}>
+      <Page
+        footer={
+          <>
+            {view.offersStored ? <Button label="저장된 레시피 보기" onPress={() => router.dismissTo('/home')} /> : null}
+            {view.canRetry ? (
+              <Button label="다시 시도" onPress={retry} variant={view.offersStored ? 'text' : 'primary'} />
+            ) : null}
+          </>
+        }
+      >
         <TopBar onBack={() => router.back()} />
         <CenterState
-          description={message}
+          description={view.description}
           style={styles.emptyState}
-          title={'지금은 찾을 수\n없어요'}
+          title={view.title}
           visual={<Picture size={150} source={ILLUSTRATIONS.notFound} style={styles.emptyVisual} />}
         />
       </Page>

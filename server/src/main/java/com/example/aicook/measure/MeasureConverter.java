@@ -25,8 +25,8 @@ import java.util.stream.Stream;
  * <li>A user with a measuring spoon or cup sees the units it covers exactly as written.</li>
  * <li>Spoon units pick their own spoon first (큰술: rice spoon, 작은술: teaspoon) and fall back
  *     to the other spoon with a fraction ("밥숟가락 반").</li>
- * <li>Plain volumes (ml, 컵) of liquids use a cup, then a bottle or bowl; solids are never
- *     measured by the volume of a container.</li>
+ * <li>Plain volumes (ml, 컵) of liquids use the owned cup, bottle or bowl that needs the fewest
+ *     pours, then the tidiest amount; solids are never measured by the volume of a container.</li>
  * <li>Weights are shown as written. Only for beginners they are expressed with a tool, and only
  *     when a per-ingredient weight reference exists; grams are never treated as millilitres.</li>
  * </ul>
@@ -147,30 +147,62 @@ public class MeasureConverter {
         }
         double ml = toMl(volume);
         ContentType contentType = contentTypeOf(request.form());
-        List<List<Variant>> groups = spoonUnit
-                ? spoonOrder.stream().flatMap(id -> ownedMeasuringTool(request, id).stream()).map(List::of).toList()
-                : toolGroupsFor(ml, request.ownedTools());
+        Optional<Expression> expression = spoonUnit
+                ? spooned(spoonOrder.stream().flatMap(id -> ownedMeasuringTool(request, id).stream()).toList(),
+                        ml, request.sensitivity(), contentType)
+                : plainVolume(request, ml, contentType);
+        return expression.map(found -> found.toResult(seasoning, note))
+                .orElseGet(() -> MeasureResult.unconverted(rawText, seasoning, QuantityStatus.NEEDS_CHECK));
+    }
 
-        Expression fallback = null;
-        for (List<Variant> group : groups) {
-            Optional<Expression> best = group.stream()
-                    .flatMap(tool -> express(ml / tool.representativeVolumeMl(), request.sensitivity(), tool, contentType).stream())
-                    .min(Comparator.comparing(Expression::hasFraction)
-                            .thenComparingDouble(Expression::error)
-                            .thenComparingDouble(Expression::total));
-            if (best.isEmpty()) {
-                continue;
-            }
-            if (best.get().total() <= MAX_COMFORTABLE_COUNT + EPSILON) {
-                return best.get().toResult(seasoning, note);
-            }
-            if (fallback == null) {
-                fallback = best.get();
-            }
+    /**
+     * A plain volume goes into the owned cup, bottle or bowl that needs the fewest pours. A small
+     * volume is spooned when that takes few spoons, and spoons are the last resort otherwise.
+     */
+    private Optional<Expression> plainVolume(Request request, double ml, ContentType contentType) {
+        List<Variant> measuring = request.ownedTools().stream().filter(Variant::isMeasuringTool).toList();
+        List<Variant> spoons = measuring.stream()
+                .filter(MeasureConverter::isSpoon)
+                .sorted(Comparator.comparingDouble(Variant::representativeVolumeMl).reversed())
+                .toList();
+        Optional<Expression> spoonAmount = spooned(spoons, ml, request.sensitivity(), contentType);
+        if (ml < SMALL_VOLUME_ML && spoonAmount.filter(Expression::isComfortable).isPresent()) {
+            return spoonAmount;
         }
-        return fallback != null
-                ? fallback.toResult(seasoning, note)
-                : MeasureResult.unconverted(rawText, seasoning, QuantityStatus.NEEDS_CHECK);
+        Optional<Expression> poured = poured(pourableInOrder(measuring), ml, request.sensitivity(), contentType);
+        return poured.isPresent() ? poured : spoonAmount;
+    }
+
+    /** The first spoon that needs few fills; when none does, the first spoon that can express the amount. */
+    private Optional<Expression> spooned(List<Variant> spoonsInOrder, double ml, Sensitivity sensitivity,
+                                         ContentType contentType) {
+        List<Expression> expressions = spoonsInOrder.stream()
+                .flatMap(spoon -> express(ml / spoon.representativeVolumeMl(), sensitivity, spoon, contentType).stream())
+                .toList();
+        return expressions.stream().filter(Expression::isComfortable).findFirst()
+                .or(() -> expressions.stream().findFirst());
+    }
+
+    /**
+     * Fewest pours first, then the tidiest amount (whole, then a half, then thirds), then the
+     * usual order of the tools, then the smallest error. Only amounts inside the tolerance compete.
+     */
+    // TODO(spec): pourChoiceToleranceRatio (10%) is a provisional value. Without it "fewest pours"
+    // turns 400 mL into one full 500 mL bottle (25% more) instead of two cups (3.5% off).
+    private Optional<Expression> poured(List<Variant> toolsInOrder, double ml, Sensitivity sensitivity,
+                                        ContentType contentType) {
+        List<Expression> all = toolsInOrder.stream()
+                .flatMap(tool -> express(ml / tool.representativeVolumeMl(), sensitivity, tool, contentType).stream())
+                .toList();
+        // When a close amount exists, a rougher one never wins just because it is fewer pours.
+        List<Expression> close = all.stream()
+                .filter(expression -> expression.error() <= units.pourChoiceToleranceRatio() + EPSILON)
+                .toList();
+        return (close.isEmpty() ? all : close).stream()
+                .min(Comparator.comparingInt(Expression::pours)
+                        .thenComparingInt(Expression::tidiness)
+                        .thenComparingInt((Expression expression) -> toolsInOrder.indexOf(expression.tool()))
+                        .thenComparingDouble(Expression::error));
     }
 
     private boolean ownsStandardToolFor(Request request, String unit) {
@@ -179,34 +211,14 @@ public class MeasureConverter {
                 .anyMatch(tool -> tool.isStandardMeasure() && tool.id().equals(standardTool.get()));
     }
 
-    /**
-     * Tool groups to try in order for a plain volume: cups, then bottle and bowls in the seed
-     * order, then spoons (spoons first when the volume is small).
-     */
-    private List<List<Variant>> toolGroupsFor(double ml, List<Variant> ownedTools) {
-        List<Variant> measuring = ownedTools.stream().filter(Variant::isMeasuringTool).toList();
-        List<List<Variant>> spoons = measuring.stream()
-                .filter(MeasureConverter::isSpoon)
-                .sorted(Comparator.comparingDouble(Variant::representativeVolumeMl).reversed())
-                .map(List::of)
-                .toList();
-        List<Variant> cups = measuring.stream().filter(MeasureConverter::isCup).toList();
-        List<List<Variant>> containers = measuring.stream()
+    /** Cups, then the bottle and bowls in the seed order: the usual order when nothing else decides. */
+    private List<Variant> pourableInOrder(List<Variant> measuring) {
+        List<Variant> tools = new ArrayList<>(measuring.stream().filter(MeasureConverter::isCup).toList());
+        measuring.stream()
                 .filter(tool -> !isSpoon(tool) && !isCup(tool))
                 .sorted(Comparator.comparingInt(this::containerOrder))
-                .map(List::of)
-                .toList();
-        List<List<Variant>> groups = new ArrayList<>();
-        if (ml < SMALL_VOLUME_ML) {
-            groups.addAll(spoons);
-            groups.add(cups);
-            groups.addAll(containers);
-        } else {
-            groups.add(cups);
-            groups.addAll(containers);
-            groups.addAll(spoons);
-        }
-        return groups;
+                .forEach(tools::add);
+        return tools;
     }
 
     private int containerOrder(Variant tool) {
@@ -270,12 +282,14 @@ public class MeasureConverter {
             parts = isCup(tool) ? CUP_PARTS : CONTAINER_PARTS;
         }
         String wholeKey = fullKey;
+        String counter = units.counterOf(tool.id()).orElse(null);
         int base = (int) Math.floor(fills + EPSILON);
         Stream<Expression> candidates = Stream.of(base - 1, base, base + 1)
                 .filter(whole -> whole >= 0)
                 .flatMap(whole -> Stream.concat(
-                        Stream.of(new Expression(tool, whole, 0, wholeKey, 0)),
-                        parts.stream().map(part -> new Expression(tool, whole, part.fraction(), part.key(), 0))))
+                        Stream.of(new Expression(tool, whole, 0, wholeKey, 0, counter)),
+                        parts.stream().map(part ->
+                                new Expression(tool, whole, part.fraction(), part.key(), 0, counter))))
                 .filter(candidate -> candidate.total() > EPSILON)
                 .map(candidate -> candidate.withError(Math.abs(candidate.total() - fills) / fills));
         if (seasoning) {
@@ -290,10 +304,28 @@ public class MeasureConverter {
                 .filter(candidate -> candidate.error() <= tolerance + EPSILON);
     }
 
-    private record Expression(Variant tool, int whole, double fraction, String key, double error) {
+    /** counter: the word a container is counted with ("병"), null for tools counted in fills. */
+    private record Expression(Variant tool, int whole, double fraction, String key, double error, String counter) {
 
         double total() {
             return whole + fraction;
+        }
+
+        boolean isComfortable() {
+            return total() <= MAX_COMFORTABLE_COUNT + EPSILON;
+        }
+
+        /** How many times the tool is filled and poured: one and a half cups are two pours. */
+        int pours() {
+            return (int) Math.ceil(total() - EPSILON);
+        }
+
+        /** 0 for a whole number of fills, 1 with a half, 2 with a third or two thirds. */
+        int tidiness() {
+            if (!hasFraction()) {
+                return 0;
+            }
+            return isHalf() ? 1 : 2;
         }
 
         boolean hasFraction() {
@@ -301,7 +333,7 @@ public class MeasureConverter {
         }
 
         Expression withError(double newError) {
-            return new Expression(tool, whole, fraction, key, newError);
+            return new Expression(tool, whole, fraction, key, newError, counter);
         }
 
         MeasureResult toResult(boolean tasteAdjust, String note) {
@@ -313,7 +345,18 @@ public class MeasureConverter {
             if (isSpoon(tool)) {
                 return spoonText();
             }
-            return isCup(tool) ? cupText() : containerText();
+            if (isCup(tool)) {
+                return cupText();
+            }
+            return counter != null ? countedText() : containerText();
+        }
+
+        /** A bottle is counted itself: "생수병 1병", "생수병 1병 반", "생수병 반 병". */
+        private String countedText() {
+            if (whole == 0) {
+                return tool.name() + " 반 " + counter;
+            }
+            return tool.name() + " " + whole + counter + (hasFraction() ? " 반" : "");
         }
 
         /** "밥숟가락으로 1번 반", "밥숟가락 반", "밥숟가락으로 1번과 2/3". */

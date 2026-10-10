@@ -254,7 +254,83 @@ class MeasureConverterTest {
     void bottleIsPreferredOverABowlForLiquids() {
         MeasureResult result = convert("500ml", Sensitivity.NORMAL, IngredientForm.LIQUID, RICE_BOWL, WATER_BOTTLE);
 
-        assertThat(result.text()).isEqualTo("생수병으로 가득 1번");
+        assertThat(result.text()).isEqualTo("생수병 1병");
+    }
+
+    @Test
+    void theToolThatNeedsTheFewestPoursIsChosen() {
+        // The paper cup would take two and two thirds cups: three pours against one bottle.
+        MeasureResult stock = convert("500ml", Sensitivity.NORMAL, IngredientForm.LIQUID,
+                RICE_SPOON, PAPER_CUP, WATER_BOTTLE);
+        MeasureResult withoutBottle = convert("500ml", Sensitivity.NORMAL, IngredientForm.LIQUID,
+                RICE_SPOON, PAPER_CUP);
+
+        assertThat(stock.toolVariantId()).isEqualTo("water_bottle_500");
+        assertThat(stock.text()).isEqualTo("생수병 1병");
+        assertThat(stock.count()).isEqualTo(1.0);
+        assertThat(withoutBottle.text()).isEqualTo("작은 종이컵 2컵과 2/3");
+    }
+
+    @Test
+    void withTheSamePoursTheTidierAmountWins() {
+        Variant bigCup = tool("glass_cup", "유리컵", 750.0, new Cup(90, 70, 150, 10), List.of());
+        Variant soupBowl = tool("soup_bowl", "국그릇", 500.0, null, List.of());
+
+        // One pour either way: a whole bottle is tidier than two thirds of the cup.
+        MeasureResult wholeOverThirds = convert("500ml", Sensitivity.NORMAL, IngredientForm.LIQUID,
+                bigCup, WATER_BOTTLE);
+        // Both are one whole fill: the usual order (bottle before bowls) decides.
+        MeasureResult usualOrder = convert("500ml", Sensitivity.NORMAL, IngredientForm.LIQUID,
+                soupBowl, WATER_BOTTLE);
+        // A half is tidier than a third: 250 mL is half a bottle or a third of the big cup.
+        MeasureResult halfOverThird = convert("250ml", Sensitivity.NORMAL, IngredientForm.LIQUID,
+                bigCup, WATER_BOTTLE);
+
+        assertThat(wholeOverThirds.text()).isEqualTo("생수병 1병");
+        assertThat(usualOrder.text()).isEqualTo("생수병 1병");
+        assertThat(halfOverThird.text()).isEqualTo("생수병 반 병");
+    }
+
+    @Test
+    void aRoughAmountDoesNotWinJustBecauseItIsFewerPours() {
+        // One bottle would be 25% too much; two cups are 3.5% off.
+        MeasureResult result = convert("400ml", Sensitivity.NORMAL, IngredientForm.LIQUID, PAPER_CUP, WATER_BOTTLE);
+
+        assertThat(result.text()).isEqualTo("작은 종이컵 2컵");
+    }
+
+    @Test
+    void measuredVolumeIsUsedWhenChoosingTheTool() {
+        Variant soupBowl = tool("soup_bowl", "국그릇", 500.0, null, List.of());
+
+        MeasureResult representative = convert("1000ml", Sensitivity.NORMAL, IngredientForm.LIQUID,
+                PAPER_CUP, soupBowl);
+        // The user's bowl holds 250 mL: four bowls now, against five cups.
+        MeasureResult measured = convert("1000ml", Sensitivity.NORMAL, IngredientForm.LIQUID,
+                PAPER_CUP, soupBowl.withVolume(250));
+        // Measured at 1000 mL it is a single pour.
+        MeasureResult bigBowl = convert("1000ml", Sensitivity.NORMAL, IngredientForm.LIQUID,
+                PAPER_CUP, soupBowl.withVolume(1000));
+
+        assertThat(representative.text()).isEqualTo("국그릇으로 가득 2번");
+        assertThat(measured.text()).isEqualTo("국그릇으로 가득 4번");
+        assertThat(bigBowl.text()).isEqualTo("국그릇으로 가득 1번");
+    }
+
+    @Test
+    void seasoningIsRoundedDownWhicheverToolIsChosen() {
+        for (int ml = 100; ml <= 1200; ml += 50) {
+            MeasureResult result = convert(ml + "ml", Sensitivity.HIGH, IngredientForm.LIQUID,
+                    PAPER_CUP, WATER_BOTTLE, RICE_BOWL);
+            double toolMl = switch (result.toolVariantId()) {
+                case "paper_cup_small" -> 193;
+                case "water_bottle_500" -> 500;
+                default -> 300;
+            };
+
+            assertThat(result.count() * toolMl).isLessThanOrEqualTo(ml + 1e-6);
+            assertThat(result.tasteAdjust()).isTrue();
+        }
     }
 
     @Test

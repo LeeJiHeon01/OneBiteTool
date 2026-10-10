@@ -9,16 +9,13 @@ import { AppText } from '@/components/text';
 import { TopBar } from '@/components/top-bar';
 import { SKILL_LEVELS } from '@/data/catalog';
 import { ILLUSTRATIONS } from '@/data/images';
-import { resetTo } from '@/nav';
 import { useAppState } from '@/state/app-state';
 import { colors } from '@/theme/tokens';
 
 export default function ReadyScreen() {
-  const { skillLevel, toolIds, allergenCodes, completeOnboarding } = useAppState();
-  const start = () => {
-    completeOnboarding();
-    resetTo('/home');
-  };
+  const { skillLevel, toolIds, allergenCodes } = useAppState();
+  // The first-run notice comes next; onboarding is finished when the user confirms it.
+  const start = () => router.push('/onboarding/notice' as Href);
   const rows: { label: string; value: string; href: Href }[] = [
     {
       label: '요리 실력',
