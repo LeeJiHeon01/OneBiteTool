@@ -6,14 +6,14 @@ import { Button } from '@/components/button';
 import { AppText } from '@/components/text';
 import { colors } from '@/theme/tokens';
 
-// Reasons a user can pick for "this step looks wrong". There is no free text on purpose.
+// Reasons a user can pick for "this step looks wrong" (spec 8, POST /api/reports). No free text on purpose.
 export const REPORT_REASONS = [
   { id: 'AMOUNT', label: '양이 이상해요' },
   { id: 'TIME', label: '시간이 이상해요' },
   { id: 'HEAT', label: '불 세기가 이상해요' },
   { id: 'ORDER', label: '순서가 이상해요' },
   { id: 'UNCLEAR', label: '설명이 이해가 안 돼요' },
-  { id: 'SAFETY', label: '안전 문구가 필요해요' },
+  { id: 'SAFETY_NEEDED', label: '안전 문구가 필요해요' },
 ] as const;
 
 export type ReportReason = (typeof REPORT_REASONS)[number]['id'];

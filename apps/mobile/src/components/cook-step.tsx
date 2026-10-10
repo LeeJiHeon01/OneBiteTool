@@ -30,7 +30,8 @@ export function CookStep({ step, heatSource, allergyMatches }: Props) {
   const [reporting, setReporting] = useState(false);
   const showToast = useToast();
 
-  // TODO(spec): 신고 API — 서버 계약(spec §8)에 신고가 없어 고른 사유를 아직 보내지 않는다.
+  // The contract (spec 8, POST /api/reports) is settled but not built yet: nothing is sent for now.
+  // When it is, a failed send still shows the same thanks and is not retried.
   const sendReport = (_reason: ReportReason) => showToast('알려주셔서 고마워요');
   // Ticks are only a reminder for the user; moving on never depends on them.
   const [checkedIds, setCheckedIds] = useState<string[]>([]);

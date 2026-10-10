@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -119,6 +120,76 @@ class StepRewriterTest {
     }
 
     @Test
+    void stepWithTwoActionsBecomesOneStepPerAction() {
+        FakeClient client = new FakeClient(answer(
+                rewrite("S1", "김치를 먹기 좋은 크기로 썰어요", null),
+                split("S2", part("김치를 넣어요", null, "action.add"), part("김치를 볶아요", null, "action.stir_fry"))));
+
+        List<AdaptedStep> steps = rewrite(client, SkillLevel.LOW);
+
+        assertThat(steps).extracting(AdaptedStep::action)
+                .containsExactly("김치를 먹기 좋은 크기로 썰어요", "김치를 넣어요", "김치를 볶아요");
+        assertThat(steps).extracting(AdaptedStep::order).containsExactly(1, 2, 3);
+        assertThat(steps).extracting(AdaptedStep::stepId).containsExactly("S1", "S2-1", "S2-2");
+        AdaptedStep adding = steps.get(1);
+        AdaptedStep frying = steps.get(2);
+        // No time or heat is made up: they stay with the action they were given for.
+        assertThat(adding.durationSeconds()).isNull();
+        assertThat(adding.heatLevel()).isNull();
+        assertThat(adding.completionCheck()).isNull();
+        assertThat(frying.durationSeconds()).isEqualTo(FRY.durationSeconds());
+        assertThat(frying.heatLevel()).isEqualTo(FRY.heatLevel());
+        assertThat(frying.completionCheck()).isEqualTo(FRY.completionCheck());
+        assertThat(frying.actionKey()).isEqualTo("action.stir_fry");
+        assertThat(adding.actionKey()).isEqualTo("action.add");
+        // Ingredients, tools and safety notes are kept on every part.
+        for (AdaptedStep part : List.of(adding, frying)) {
+            assertThat(part.ingredientIds()).isEqualTo(FRY.ingredientIds());
+            assertThat(part.toolIds()).isEqualTo(FRY.toolIds());
+            assertThat(part.safetyNotes()).isEqualTo(FRY.safetyNotes());
+            assertThat(part.mergedFromStepIds()).containsExactly("S2");
+        }
+    }
+
+    @Test
+    void sentenceWithTwoMainActionsIsRejectedAndAskedAgain() {
+        String twoInOne = answer(
+                rewrite("S1", "김치를 먹기 좋은 크기로 썰어요", null),
+                split("S2", part("김치를 넣고 볶아요", null, "action.add", "action.stir_fry")));
+        String fixed = answer(
+                rewrite("S1", "김치를 먹기 좋은 크기로 썰어요", null),
+                split("S2", part("김치를 넣어요", null, "action.add"), part("김치를 볶아요", null, "action.stir_fry")));
+
+        FakeClient retried = new FakeClient(twoInOne, fixed);
+        assertThat(rewrite(retried, SkillLevel.LOW)).extracting(AdaptedStep::action)
+                .containsExactly("김치를 먹기 좋은 크기로 썰어요", "김치를 넣어요", "김치를 볶아요");
+        assertThat(retried.calls).isEqualTo(2);
+
+        // Still two actions after the retry: the server's own sentence stays, unsplit.
+        FakeClient stubborn = new FakeClient(twoInOne, twoInOne);
+        List<AdaptedStep> kept = rewrite(stubborn, SkillLevel.LOW);
+        assertThat(kept).hasSize(2);
+        assertThat(kept.get(1)).isEqualTo(FRY);
+        assertThat(stubborn.calls).isEqualTo(2);
+    }
+
+    @Test
+    void splitThatLeavesTheTimerWithoutAnActionIsRejected() {
+        // Neither part is the frying the timer and heat were given for.
+        FakeClient noAnchor = new FakeClient(answer(
+                rewrite("S1", "김치를 먹기 좋은 크기로 썰어요", null),
+                split("S2", part("김치를 넣어요", null, "action.add"), part("김치를 섞어요", null, "action.mix"))));
+        // Both parts claim it.
+        FakeClient twoAnchors = new FakeClient(answer(
+                rewrite("S1", "김치를 먹기 좋은 크기로 썰어요", null),
+                split("S2", part("김치를 볶아요", null, "action.stir_fry"),
+                        part("김치를 더 볶아요", null, "action.stir_fry"))));
+
+        assertThat(rewrite(noAnchor, SkillLevel.LOW).get(1)).isEqualTo(FRY);
+        assertThat(rewrite(twoAnchors, SkillLevel.LOW).get(1)).isEqualTo(FRY);
+    }
+
+    @Test
     void failedOrUnavailableAiKeepsServerSentences() {
         FakeClient failing = new FakeClient();
         assertThat(rewrite(failing, SkillLevel.LOW)).containsExactly(CUT, FRY);
@@ -138,9 +209,19 @@ class StepRewriterTest {
         return "{\"steps\":[" + String.join(",", rewrites) + "]}";
     }
 
+    /** A step answered as one part with the step's own action. */
     private static String rewrite(String stepId, String action, String details) {
+        return "{\"stepId\":\"" + stepId + "\",\"parts\":[" + part(action, details, "action.stir_fry") + "]}";
+    }
+
+    private static String split(String stepId, String... parts) {
+        return "{\"stepId\":\"" + stepId + "\",\"parts\":[" + String.join(",", parts) + "]}";
+    }
+
+    private static String part(String action, String details, String... actionKeys) {
         String detailsJson = details == null ? "null" : "\"" + details + "\"";
-        return "{\"stepId\":\"" + stepId + "\",\"action\":\"" + action + "\",\"details\":" + detailsJson + "}";
+        String keys = List.of(actionKeys).stream().map(key -> "\"" + key + "\"").collect(Collectors.joining(","));
+        return "{\"action\":\"" + action + "\",\"actionKeys\":[" + keys + "],\"details\":" + detailsJson + "}";
     }
 
     private static AdaptedStep step(String id, String action, List<String> toolIds, HeatLevel heatLevel,

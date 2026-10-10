@@ -11,11 +11,38 @@
         "items": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["stepId", "action", "details"],
+          "required": ["stepId", "parts"],
           "properties": {
             "stepId": { "type": "string" },
-            "action": { "type": "string" },
-            "details": { "type": ["string", "null"] }
+            "parts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["action", "actionKeys", "details"],
+                "properties": {
+                  "action": { "type": "string" },
+                  "actionKeys": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "action.cut",
+                        "action.heat_oil",
+                        "action.stir_fry",
+                        "action.boil",
+                        "action.add",
+                        "action.mix",
+                        "action.grill",
+                        "action.plate",
+                        "action.other"
+                      ]
+                    }
+                  },
+                  "details": { "type": ["string", "null"] }
+                }
+              }
+            }
           }
         }
       }

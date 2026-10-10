@@ -123,6 +123,21 @@ public record AdaptationResponse(String id, Status status, RecipeBadge recipeBad
                     heatVisualKey, completionCheck, allSafetyNotes, mergedIds);
         }
 
+        /**
+         * One action of this step when it is shown as several steps. Ingredients, tools and safety
+         * notes are kept on every part. Only the part that carries the step's own action keeps
+         * the timer and the check; heat stays on that part and on other parts cooked over heat.
+         */
+        AdaptedStep partOf(int number, String partAction, String partActionKey, String partDetails,
+                           boolean keepsTimer, boolean keepsHeat) {
+            return new AdaptedStep(stepId + "-" + number, order, partAction, partActionKey, partDetails,
+                    ingredientIds, toolIds, visualKeys, keepsTimer ? durationSeconds : null,
+                    keepsTimer ? timerStartCondition : null, keepsHeat ? heatLevel : null,
+                    keepsHeat ? heatRaw : null, keepsTimer ? deviceSettingRaw : null,
+                    keepsHeat ? heatVisualKey : null, keepsTimer ? completionCheck : null, safetyNotes,
+                    mergedFromStepIds.isEmpty() ? List.of(stepId) : mergedFromStepIds, List.of());
+        }
+
         /** Same step with other wording; time, heat, check and safety notes stay as they are. */
         AdaptedStep withText(String newAction, String newDetails) {
             return new AdaptedStep(stepId, order, newAction, actionKey, newDetails, ingredientIds, toolIds, visualKeys,
