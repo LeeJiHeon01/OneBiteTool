@@ -10,6 +10,7 @@ function ingredient(name: string, extra: Partial<RecipeIngredient> = {}): Recipe
   return {
     id: name,
     name,
+    dictionaryName: null,
     rawText: '1큰술',
     allergens: [],
     allergyCheckNeeded: false,

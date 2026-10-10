@@ -171,7 +171,7 @@ class AdaptationServiceTest {
     }
 
     @Test
-    void requiredIngredientWithoutARuleMakesItNotCookable() {
+    void ingredientNamedInTheDishMakesItNotCookableWhenMissing() {
         AdaptationResponse response = adaptDefault("밥");
 
         assertThat(response.status()).isEqualTo(Status.NOT_COOKABLE);

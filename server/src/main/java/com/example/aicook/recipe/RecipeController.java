@@ -26,6 +26,11 @@ public class RecipeController {
         return recipeService.search(query);
     }
 
+    @GetMapping("/suggestions")
+    public List<SearchResult> suggestions() {
+        return recipeService.suggestions();
+    }
+
     @GetMapping("/{id}")
     public Detail detail(@PathVariable("id") String id) {
         return recipeService.detail(id);

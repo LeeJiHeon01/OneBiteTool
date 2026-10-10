@@ -29,6 +29,12 @@ public final class Tools {
         public boolean isMeasuringTool() {
             return representativeVolumeMl != null;
         }
+
+        /** The same tool holding the volume its owner measured instead of the representative one. */
+        public Variant withVolume(double volumeMl) {
+            return new Variant(id, name, subLabel, iconKey, heatSourceType, volumeMl, isApproximate,
+                    isStandardMeasure, isBasic, valueSource, sourceRef, cup, fillLevels);
+        }
     }
 
     public record Cup(double topDiameterMm, double bottomDiameterMm, double heightMm, double fillLineFromTopMm) {

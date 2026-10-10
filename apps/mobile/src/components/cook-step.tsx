@@ -1,13 +1,17 @@
-import { StyleSheet, View } from 'react-native';
+import * as Speech from 'expo-speech';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { HeatIndicator } from '@/components/heat-indicator';
 import { Icon } from '@/components/icon';
+import { Checkbox } from '@/components/checkbox';
 import { AllergyBanner, SafetyNote } from '@/components/notes';
 import { StepTimer } from '@/components/step-timer';
 import { AppText } from '@/components/text';
 import { type AdaptedStep } from '@/data/recipe';
 import { type AllergyMatch } from '@/data/allergy';
 import { type HeatSource } from '@/data/catalog';
+import { stepSpeechLines } from '@/data/step-speech';
 import { colors, fonts } from '@/theme/tokens';
 
 type Props = {
@@ -20,6 +24,32 @@ type Props = {
 // One cooking step: a single action with its heat, timer, check and safety notes.
 export function CookStep({ step, heatSource, allergyMatches }: Props) {
   const hasBanner = allergyMatches.length > 0;
+  const [speaking, setSpeaking] = useState(false);
+  // Ticks are only a reminder for the user; moving on never depends on them.
+  const [checkedIds, setCheckedIds] = useState<string[]>([]);
+  const toggleItem = (id: string) =>
+    setCheckedIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+
+  // Reading stops when the step leaves the screen (next, previous, list view, closing).
+  useEffect(() => () => void Speech.stop(), []);
+
+  // Never starts by itself: the user presses the button. The device's own voice is used.
+  const toggleSpeech = () => {
+    if (speaking) {
+      Speech.stop();
+      setSpeaking(false);
+      return;
+    }
+    setSpeaking(true);
+    const stop = () => setSpeaking(false);
+    Speech.speak(stepSpeechLines(step, allergyMatches).join(' '), {
+      language: 'ko-KR',
+      onDone: stop,
+      onStopped: stop,
+      onError: stop,
+    });
+  };
+
   return (
     <>
       {hasBanner ? (
@@ -39,11 +69,50 @@ export function CookStep({ step, heatSource, allergyMatches }: Props) {
         <AppText weight="extraBold" style={styles.actionLabel}>
           {step.actionLabel}
         </AppText>
+        <Pressable
+          accessibilityLabel={speaking ? '읽기 멈추기' : '이 단계 읽어주기'}
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={toggleSpeech}
+          style={[styles.speak, speaking && styles.speakOn]}
+        >
+          <Icon name={speaking ? 'pause' : 'speaker'} size={22} color={speaking ? colors.white : colors.primary} />
+        </Pressable>
       </View>
       <AppText accessibilityRole="header" style={styles.instruction}>
         {step.text}
       </AppText>
       {step.details ? <AppText style={styles.details}>{step.details}</AppText> : null}
+      {step.subItems.length > 0 ? (
+        <View style={styles.checklist}>
+          {step.subItems.map((item) => {
+            const checked = checkedIds.includes(item.id);
+            // The warning stays next to the item that uses the ingredient, as well as on top.
+            const allergy = allergyMatches.filter((match) => item.ingredientIds.includes(match.ingredientId));
+            return (
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked }}
+                key={item.id}
+                onPress={() => toggleItem(item.id)}
+                style={styles.checkItem}
+              >
+                <Checkbox checked={checked} />
+                <View style={styles.checkBody}>
+                  <AppText weight="semiBold" style={[styles.checkText, checked && styles.checkTextDone]}>
+                    {item.text}
+                  </AppText>
+                  {allergy.map((match) => (
+                    <AppText key={match.ingredientId} weight="bold" style={styles.checkAllergy}>
+                      알레르기 주의: {match.ingredientName} — {match.allergenNames}
+                    </AppText>
+                  ))}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
       <View style={styles.info}>
         {/* Oven, air fryer and microwave settings are shown as the recipe wrote them, never converted. */}
         {step.deviceSetting ? (
@@ -97,6 +166,18 @@ const styles = StyleSheet.create({
   },
   actionCompact: { height: 96, marginTop: 10 },
   actionLabel: { fontSize: 18, color: colors.primary },
+  speak: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  speakOn: { backgroundColor: colors.primary },
   instruction: {
     marginTop: 24,
     marginBottom: 20,
@@ -106,6 +187,20 @@ const styles = StyleSheet.create({
     letterSpacing: -0.8,
   },
   details: { marginTop: -8, marginBottom: 20, fontSize: 17, lineHeight: 27, color: colors.sub },
+  checklist: { marginBottom: 20, borderTopWidth: 1, borderTopColor: colors.line },
+  checkItem: {
+    minHeight: 56,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  checkBody: { flex: 1, gap: 3 },
+  checkText: { fontSize: 18, lineHeight: 26 },
+  checkTextDone: { color: colors.hint, textDecorationLine: 'line-through' },
+  checkAllergy: { fontSize: 13, lineHeight: 19, color: colors.danger },
   info: { gap: 12 },
   device: { padding: 18, borderWidth: 1, borderColor: colors.line, borderRadius: 20 },
   deviceLabel: { fontSize: 13, color: colors.sub },

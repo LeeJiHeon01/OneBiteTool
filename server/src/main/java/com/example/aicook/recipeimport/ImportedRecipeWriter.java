@@ -59,6 +59,22 @@ public class ImportedRecipeWriter {
         return recipeId;
     }
 
+    /**
+     * Replaces a stored recipe by a new extract of the same page. Import jobs that pointed at the
+     * old recipe point at the new one, so the same search keeps finding it.
+     */
+    @Transactional
+    public String replace(String oldRecipeId, String name, String url, Double servings, Integer totalMinutes,
+                          Extract.Page page) {
+        List<String> jobIds = jdbc.sql("SELECT id FROM recipe_import_job WHERE recipe_id = :id")
+                .param("id", oldRecipeId).query(String.class).list();
+        jdbc.sql("DELETE FROM recipe WHERE id = :id").param("id", oldRecipeId).update();
+        String newId = save(name, url, servings, totalMinutes, page);
+        jobIds.forEach(jobId -> jdbc.sql("UPDATE recipe_import_job SET recipe_id = :recipeId WHERE id = :id")
+                .param("recipeId", newId).param("id", jobId).update());
+        return newId;
+    }
+
     private String insertRecipe(String name, String url, Double servings, Integer totalMinutes) {
         // TODO(spec): a page without a servings count is stored with the column default (1 serving).
         return jdbc.sql("""

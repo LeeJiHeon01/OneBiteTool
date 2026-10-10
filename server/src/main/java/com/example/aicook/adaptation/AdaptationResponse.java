@@ -7,13 +7,19 @@ import com.example.aicook.reference.Sensitivity;
 
 import java.util.List;
 
-/** Response of POST /api/recipe-adaptations (spec 8.3, 8.3.1). */
+/**
+ * Response of POST /api/recipe-adaptations (spec 8.3, 8.3.1).
+ *
+ * @param ignoredCustomTools tools whose user-measured volume was not accepted, so their
+ *                           representative volume was used (spec 4.8)
+ */
 public record AdaptationResponse(String id, Status status, RecipeBadge recipeBadge, String sourceUrl,
                                  List<AllergyWarning> allergyWarnings,
                                  List<String> allergyCheckNeededIngredientIds,
                                  List<PendingQuestion> pendingQuestions, List<Change> changes,
                                  List<RequiredItem> requiredItems, List<String> safetySummary,
-                                 List<AdaptedIngredient> ingredients, List<AdaptedStep> steps) {
+                                 List<AdaptedIngredient> ingredients, List<AdaptedStep> steps,
+                                 List<String> ignoredCustomTools) {
 
     public enum Status {
         COOKABLE,
@@ -27,8 +33,10 @@ public record AdaptationResponse(String id, Status status, RecipeBadge recipeBad
     public record PendingQuestion(String ingredientId, String substituteId, String substituteName) {
     }
 
+    /** OMIT_BY_USER: left out because the user lacks it; no verified rule says the dish works without it. */
     public enum ChangeType {
         OMIT,
+        OMIT_BY_USER,
         SUBSTITUTE,
         TOOL_SUBSTITUTE,
         METHOD_CHANGE,
@@ -57,26 +65,79 @@ public record AdaptationResponse(String id, Status status, RecipeBadge recipeBad
     public record Original(Double quantity, String unit, String rawText) {
     }
 
-    /** count is the number of fills including the fraction (1.5 = one and a half). */
+    /**
+     * count is the number of fills including the fraction (1.5 = one and a half).
+     * userMeasured: the amount was worked out with the volume the user measured for this tool.
+     */
     public record Display(String toolVariantId, String fillLevelKey, Double count, String text,
-                          boolean tasteAdjust) {
+                          boolean tasteAdjust, boolean userMeasured) {
+
+        public Display(String toolVariantId, String fillLevelKey, Double count, String text, boolean tasteAdjust) {
+            this(toolVariantId, fillLevelKey, count, text, tasteAdjust, false);
+        }
     }
 
-    /** actionKey is the kind of action ("action.stir_fry"); the app picks the step picture and label from it. */
+    /**
+     * actionKey is the kind of action ("action.stir_fry"); the app picks the step picture and label from it.
+     * mergedFromStepIds lists the recipe steps a joined step came from; empty for a step shown as stored.
+     * subItems is the checklist of a joined finishing step; empty otherwise.
+     */
     public record AdaptedStep(String stepId, int order, String action, String actionKey, String details,
                               List<String> ingredientIds,
                               List<String> toolIds, List<String> visualKeys, Integer durationSeconds,
                               String timerStartCondition, HeatLevel heatLevel, String heatRaw,
-                              String deviceSettingRaw, String heatVisualKey, String completionCheck, List<SafetyNote> safetyNotes) {
+                              String deviceSettingRaw, String heatVisualKey, String completionCheck,
+                              List<SafetyNote> safetyNotes, List<String> mergedFromStepIds,
+                              List<SubItem> subItems) {
+
+        public AdaptedStep(String stepId, int order, String action, String actionKey, String details,
+                           List<String> ingredientIds, List<String> toolIds, List<String> visualKeys,
+                           Integer durationSeconds, String timerStartCondition, HeatLevel heatLevel, String heatRaw,
+                           String deviceSettingRaw, String heatVisualKey, String completionCheck,
+                           List<SafetyNote> safetyNotes, List<String> mergedFromStepIds) {
+            this(stepId, order, action, actionKey, details, ingredientIds, toolIds, visualKeys, durationSeconds,
+                    timerStartCondition, heatLevel, heatRaw, deviceSettingRaw, heatVisualKey, completionCheck,
+                    safetyNotes, mergedFromStepIds, List.of());
+        }
+
+        /** Finishing steps (plating, garnishing) joined into one step with a checklist of what to do. */
+        AdaptedStep platedWith(int newOrder, String newAction, List<String> allIngredientIds,
+                               List<SafetyNote> allSafetyNotes, List<String> mergedIds, List<SubItem> items) {
+            return new AdaptedStep(stepId, newOrder, newAction, actionKey, details, allIngredientIds, toolIds,
+                    visualKeys, durationSeconds, timerStartCondition, heatLevel, heatRaw, deviceSettingRaw,
+                    heatVisualKey, completionCheck, allSafetyNotes, mergedIds, items);
+        }
+
+        /** Same step at another position in the list. */
+        AdaptedStep withOrder(int newOrder) {
+            return new AdaptedStep(stepId, newOrder, action, actionKey, details, ingredientIds, toolIds, visualKeys,
+                    durationSeconds, timerStartCondition, heatLevel, heatRaw, deviceSettingRaw, heatVisualKey,
+                    completionCheck, safetyNotes, mergedFromStepIds, subItems);
+        }
+
+        /** This step joined with the same action on other ingredients; mergedIds lists every source step. */
+        AdaptedStep mergedWith(int newOrder, String newAction, List<String> allIngredientIds,
+                               List<SafetyNote> allSafetyNotes, List<String> mergedIds) {
+            return new AdaptedStep(stepId, newOrder, newAction, actionKey, details, allIngredientIds, toolIds,
+                    visualKeys, durationSeconds, timerStartCondition, heatLevel, heatRaw, deviceSettingRaw,
+                    heatVisualKey, completionCheck, allSafetyNotes, mergedIds);
+        }
 
         /** Same step with other wording; time, heat, check and safety notes stay as they are. */
         AdaptedStep withText(String newAction, String newDetails) {
             return new AdaptedStep(stepId, order, newAction, actionKey, newDetails, ingredientIds, toolIds, visualKeys,
                     durationSeconds, timerStartCondition, heatLevel, heatRaw, deviceSettingRaw, heatVisualKey,
-                    completionCheck, safetyNotes);
+                    completionCheck, safetyNotes, mergedFromStepIds, subItems);
         }
     }
 
     public record SafetyNote(String message, String detail) {
+    }
+
+    /**
+     * One thing to do inside a finishing step, shown as a checklist. Ticking it is never needed
+     * to move on. ingredientIds lets the app repeat an allergy warning next to the item.
+     */
+    public record SubItem(String stepId, String text, List<String> ingredientIds) {
     }
 }

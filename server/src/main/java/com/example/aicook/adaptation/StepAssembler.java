@@ -61,7 +61,7 @@ class StepAssembler {
                     keptIngredientIds, toolIds, List.of(), step.durationSeconds(), step.timerStartCondition(),
                     step.heatLevel(), step.heatRaw(), step.deviceSettingRaw(),
                     heatVisualKey(step, conditions.heatSource()),
-                    step.completionCheck(), notes));
+                    step.completionCheck(), notes, List.of()));
         }
         return new Result(steps, List.copyOf(summary));
     }
@@ -119,6 +119,9 @@ class StepAssembler {
     }
 
     private boolean triggers(SafetyRule rule, Recipe.Step step, List<String> toolIds, Set<String> dictionaryCodes) {
+        if (rule.requiresHeat() && !isHeatingStep(step, toolIds)) {
+            return false;
+        }
         String value = rule.triggerValue();
         return switch (rule.triggerType()) {
             case TOOL -> toolIds.contains(value);
@@ -126,6 +129,12 @@ class StepAssembler {
             case INGREDIENT -> dictionaryCodes.contains(value);
             case HEAT -> step.heatLevel() != null && value.equals(step.heatLevel().name());
         };
+    }
+
+    /** A step that cooks with heat: a heat level or device setting, a burner action, or a heating appliance. */
+    private boolean isHeatingStep(Recipe.Step step, List<String> toolIds) {
+        return step.usesHeat() || step.deviceSettingRaw() != null || ToolNeeds.isHeatingAction(step.actionKey())
+                || ToolNeeds.usesAppliance(toolIds, reference);
     }
 
     /** Dictionary code of what is actually used: the substitute when one was chosen. May be null. */

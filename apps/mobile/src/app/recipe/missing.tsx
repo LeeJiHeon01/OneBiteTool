@@ -61,6 +61,7 @@ export default function MissingIngredientsScreen() {
               <View style={styles.name}>
                 <AppText weight="bold" style={[styles.nameLabel, checked && styles.struck]}>
                   {ingredient.name}
+                  {ingredient.dictionaryName ? ` (${ingredient.dictionaryName})` : ''}
                 </AppText>
                 {allergyIds.includes(ingredient.id) ? <Badge label="알레르기" tone="danger" /> : null}
               </View>

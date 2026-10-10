@@ -1,4 +1,5 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect, type Href } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
@@ -12,13 +13,30 @@ import { useAppState } from '@/state/app-state';
 import { colors } from '@/theme/tokens';
 
 export default function CannotCookScreen() {
-  const { adaptation } = useAppState();
+  const { adaptation, toolIds } = useAppState();
+  const missingTool = (adaptation?.requiredItems ?? []).some((item) => item.kind === 'TOOL');
+  // The tools the answer was made with. Back from the tool screen with a different set,
+  // the recipe is checked again; while the user is still choosing, nothing happens.
+  const [checkedTools] = useState(toolIds);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (toolIds !== checkedTools) router.replace('/recipe/adapting');
+    }, [toolIds, checkedTools]),
+  );
+
+  const editTools = () => router.push({ pathname: '/onboarding/tools', params: { edit: '1' } } as Href);
 
   return (
     <Page
       footer={
         <>
-          <Button label="다른 요리 보기" onPress={() => router.dismissTo('/search')} />
+          {missingTool ? <Button label="가진 도구 다시 고르기" onPress={editTools} /> : null}
+          <Button
+            label="다른 요리 보기"
+            onPress={() => router.dismissTo('/search')}
+            variant={missingTool ? 'secondary' : 'primary'}
+          />
           <Button label="없는 재료 다시 고르기" onPress={() => router.back()} variant="text" />
         </>
       }

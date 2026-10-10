@@ -1,5 +1,7 @@
 package com.example.aicook.reference;
 
+import java.util.List;
+
 /** Dictionary entries and verified rules as stored in the database. Ids are the table codes. */
 public final class Rules {
 
@@ -14,7 +16,8 @@ public final class Rules {
      * @param allergenProductVaries processed ingredient whose contents differ by product (soy sauce, curry)
      */
     public record Ingredient(String code, String name, String category, String form, Sensitivity sensitivity,
-                             boolean garnish, ReviewLevel allergenReviewLevel, boolean allergenProductVaries) {
+                             boolean garnish, ReviewLevel allergenReviewLevel, boolean allergenProductVaries,
+                             List<String> aliases) {
     }
 
     /** AI_RESEARCHED is a conservative mapping built from public sources; no person has confirmed it. */
@@ -27,8 +30,9 @@ public final class Rules {
     public record AllergenRef(String code, boolean hidden) {
     }
 
+    /** requiresHeat: shown only on a step that heats food (돼지고기 익힘 문구는 써는 단계에 붙지 않는다). */
     public record SafetyRule(String code, TriggerType triggerType, String triggerValue, String message,
-                             String detailForLow, Placement placement) {
+                             String detailForLow, Placement placement, boolean requiresHeat) {
     }
 
     public enum TriggerType {
@@ -66,6 +70,11 @@ public final class Rules {
 
     /** The ingredient weighs {@code grams} when the tool is filled once ("밥그릇 1번"). Approximate. */
     public record WeightReference(String ingredientCode, String toolId, double grams) {
+
+        /** The same reference for a tool that holds {@code ratio} times the representative volume. */
+        public WeightReference scaledBy(double ratio) {
+            return new WeightReference(ingredientCode, toolId, grams * ratio);
+        }
     }
 
     public record ToolRule(String requiredToolId, String substituteToolId, String conditionNote, String recipeId,

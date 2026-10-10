@@ -51,6 +51,8 @@ public class RecipeImportService {
     /** Each candidate costs one extraction call. */
     private static final int MAX_CANDIDATES = 3;
     private static final int MAX_NAME_LENGTH = 128;
+    /** More steps than this many times the page's own count means the extract split too finely. */
+    private static final double MAX_STEP_RATIO = 1.5;
 
     private final JdbcClient jdbc;
     private final OpenAiClient client;
@@ -139,9 +141,60 @@ public class RecipeImportService {
                 noteRejection(jobId, violation.get());
                 continue;
             }
+            warnIfOverSplit(jobId, page.get());
             return Optional.of(save(dishName, candidate.url(), page.get(), pageText.get()));
         }
         return Optional.empty();
+    }
+
+    /** Steps follow the page's own step boundaries; far more steps than the page has is reported. */
+    private void warnIfOverSplit(String reference, Extract.Page page) {
+        Integer sourceSteps = page.sourceStepCount();
+        if (sourceSteps != null && sourceSteps > 0 && page.steps().size() > sourceSteps * MAX_STEP_RATIO) {
+            log.warn("Recipe import {}: {} steps extracted from {} source steps", reference, page.steps().size(),
+                    sourceSteps);
+        }
+    }
+
+    public record Reextracted(String name, String oldRecipeId, String newRecipeId, int stepsBefore,
+                              Integer stepsAfter, Integer sourceStepCount, String rejectedBecause) {
+    }
+
+    /**
+     * Extracts a stored web recipe again from the same page and replaces it when the new extract
+     * passes the same checks. The stored recipe is kept when the page is gone or the check fails.
+     */
+    public Reextracted reextract(String recipeId) {
+        record Stored(String name, String url, int steps) {
+        }
+        Stored stored = jdbc.sql("""
+                        SELECT r.name, r.source_url,
+                               (SELECT count(*) FROM recipe_step s WHERE s.recipe_id = r.id) AS steps
+                        FROM recipe r WHERE r.id = :id AND r.source = 'WEB_SEARCH'
+                        """)
+                .param("id", recipeId)
+                .query((rs, row) -> new Stored(rs.getString("name"), rs.getString("source_url"), rs.getInt("steps")))
+                .optional()
+                .orElseThrow(() -> ApiException.notFound("RECIPE_NOT_FOUND", "웹에서 가져온 레시피가 아니에요."));
+        Optional<String> pageText = pageFetcher.fetchText(stored.url());
+        Optional<Extract.Page> page = pageText.flatMap(text -> extract(stored.name(), stored.url(), text));
+        if (page.isEmpty()) {
+            return new Reextracted(stored.name(), recipeId, null, stored.steps(), null, null,
+                    pageText.isEmpty() ? "PAGE_UNAVAILABLE" : "EXTRACT_FAILED");
+        }
+        Optional<String> violation = validator.firstViolation(page.get(), pageText.get());
+        if (violation.isPresent()) {
+            return new Reextracted(stored.name(), recipeId, null, stored.steps(), page.get().steps().size(),
+                    page.get().sourceStepCount(), violation.get());
+        }
+        warnIfOverSplit(recipeId, page.get());
+        String compactPage = ExtractValidator.compact(pageText.get());
+        Double servings = ExtractValidator.servingsQuoted(page.get(), pageText.get()) ? page.get().servings() : null;
+        Integer totalMinutes = page.get().totalMinutes() != null && page.get().totalMinutes() > 0
+                && compactPage.contains(String.valueOf(page.get().totalMinutes())) ? page.get().totalMinutes() : null;
+        String newId = writer.replace(recipeId, stored.name(), stored.url(), servings, totalMinutes, page.get());
+        return new Reextracted(stored.name(), recipeId, newId, stored.steps(), page.get().steps().size(),
+                page.get().sourceStepCount(), null);
     }
 
     /** Candidate pages: the ones that fit the user's tools first, preferred sites first among those. Only well-formed, distinct addresses. */

@@ -1,12 +1,17 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
+import { fetchSuggestions } from '@/api/recipes';
 import { Eyebrow } from '@/components/headers';
 import { Icon } from '@/components/icon';
 import { Page } from '@/components/page';
 import { AppText } from '@/components/text';
 import { TopBar } from '@/components/top-bar';
+import { splitByVisibility } from '@/data/allergy-visibility';
+import { dateLabel, ratingLabel, recentDishes } from '@/data/history';
+import { HOME_FAVORITE_COUNT, type Favorite } from '@/data/library';
+import { type SearchResult } from '@/data/recipe';
 import { useAppState } from '@/state/app-state';
 import { colors, fonts, gutter } from '@/theme/tokens';
 
@@ -16,12 +21,47 @@ const SUGGESTION_TONES = [
   { color: colors.success, background: colors.successSoft },
 ];
 
-// Search shortcuts: dish names only. Nothing about them is known until a recipe is found.
-const SUGGESTED_DISHES = ['간장계란밥', '참치 김치찌개', '두부조림'];
-
 export default function HomeScreen() {
-  const { recentQueries, addRecentQuery } = useAppState();
+  const {
+    recentQueries,
+    addRecentQuery,
+    removeRecentQuery,
+    clearRecentQueries,
+    favorites,
+    cookRecords,
+    allergenCodes,
+    openRecipe,
+  } = useAppState();
   const [query, setQuery] = useState('');
+  // Recipes the server already has: they open at once. A new dish goes through search instead.
+  const [stored, setStored] = useState<SearchResult[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Suggestions are optional: without the server the section is simply left out.
+    fetchSuggestions()
+      .then((results) => {
+        if (!cancelled) setStored(results);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // The same rule as the search list: nothing a user with allergies must avoid is suggested.
+  const suggestions = splitByVisibility(stored, allergenCodes).shown;
+
+  const open = async (recipe: { id: string; title: string }) => {
+    try {
+      await openRecipe(recipe.id);
+      router.push('/recipe');
+    } catch {
+      // The search screen shows the error and a retry.
+      router.push({ pathname: '/search', params: { q: recipe.title } });
+    }
+  };
+  const openFavorite = (favorite: Favorite) => open({ id: favorite.id, title: favorite.name });
 
   const search = (value: string) => {
     const next = value.trim();
@@ -72,9 +112,14 @@ export default function HomeScreen() {
       </View>
       {recentQueries.length > 0 ? (
         <View style={styles.section}>
-          <AppText weight="bold" style={styles.sectionTitle}>
-            최근에 찾은 요리
-          </AppText>
+          <View style={styles.sectionHeading}>
+            <AppText weight="bold" style={styles.sectionTitle}>
+              최근에 찾은 요리
+            </AppText>
+            <Pressable accessibilityRole="button" hitSlop={12} onPress={clearRecentQueries}>
+              <AppText style={styles.sectionNote}>전체 삭제</AppText>
+            </Pressable>
+          </View>
           <ScrollView
             contentContainerStyle={styles.recentChips}
             horizontal
@@ -82,28 +127,91 @@ export default function HomeScreen() {
             style={styles.recentScroll}
           >
             {recentQueries.map((item) => (
-              <Pressable accessibilityRole="button" key={item} onPress={() => search(item)} style={styles.recentChip}>
-                <AppText style={styles.recentLabel}>{item}</AppText>
-              </Pressable>
+              <View key={item} style={styles.recentChip}>
+                <Pressable accessibilityRole="button" onPress={() => search(item)}>
+                  <AppText style={styles.recentLabel}>{item}</AppText>
+                </Pressable>
+                <Pressable
+                  accessibilityLabel={`${item} 검색 기록 삭제`}
+                  accessibilityRole="button"
+                  hitSlop={10}
+                  onPress={() => removeRecentQuery(item)}
+                >
+                  <AppText style={styles.recentRemove}>×</AppText>
+                </Pressable>
+              </View>
             ))}
           </ScrollView>
         </View>
       ) : null}
+      {favorites.length > 0 ? (
+        <View style={styles.section}>
+          <AppText weight="bold" style={styles.sectionTitle}>
+            즐겨찾기
+          </AppText>
+          <View style={styles.suggestions}>
+            {favorites.slice(0, HOME_FAVORITE_COUNT).map((favorite) => (
+              <Pressable
+                accessibilityRole="button"
+                key={favorite.id}
+                onPress={() => openFavorite(favorite)}
+                style={styles.suggestion}
+              >
+                <AppText style={styles.favoriteMark}>★</AppText>
+                <View style={styles.suggestionText}>
+                  <AppText weight="bold" style={styles.favoriteTitle}>
+                    {favorite.name}
+                  </AppText>
+                </View>
+                <Icon name="chevron" size={18} color={colors.hint} />
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ) : null}
+      {cookRecords.length > 0 ? (
+        <View style={styles.section}>
+          <AppText weight="bold" style={styles.sectionTitle}>
+            최근 만든 요리
+          </AppText>
+          <View style={styles.suggestions}>
+            {recentDishes(cookRecords).map((record) => (
+              <Pressable
+                accessibilityRole="button"
+                key={record.id}
+                onPress={() => open({ id: record.recipeId, title: record.recipeName })}
+                style={styles.suggestion}
+              >
+                <View style={styles.suggestionText}>
+                  <AppText weight="bold" style={styles.suggestionTitle}>
+                    {record.recipeName}
+                  </AppText>
+                  <AppText style={styles.suggestionMeta}>
+                    {[dateLabel(record.completedAt), ratingLabel(record.rating)].filter(Boolean).join(' · ')}
+                  </AppText>
+                </View>
+                <Icon name="chevron" size={18} color={colors.hint} />
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ) : null}
+      {suggestions.length > 0 ? (
       <View style={styles.section}>
         <View style={styles.sectionHeading}>
           <AppText weight="bold" style={styles.sectionTitle}>
             이런 요리는 어때요
           </AppText>
-          <AppText style={styles.sectionNote}>눌러서 검색</AppText>
+          <AppText style={styles.sectionNote}>바로 볼 수 있어요</AppText>
         </View>
         <View style={styles.suggestions}>
-          {SUGGESTED_DISHES.map((title, index) => {
+          {suggestions.map((result, index) => {
             const tone = SUGGESTION_TONES[index % SUGGESTION_TONES.length];
             return (
               <Pressable
                 accessibilityRole="button"
-                key={title}
-                onPress={() => search(title)}
+                key={result.id}
+                onPress={() => open(result)}
                 style={styles.suggestion}
               >
                 <View style={[styles.number, { backgroundColor: tone.background }]}>
@@ -113,15 +221,19 @@ export default function HomeScreen() {
                 </View>
                 <View style={styles.suggestionText}>
                   <AppText weight="bold" style={styles.suggestionTitle}>
-                    {title}
+                    {result.title}
+                  </AppText>
+                  <AppText style={styles.suggestionMeta}>
+                    재료 {result.ingredientCount}개 · {result.stepCount}단계
                   </AppText>
                 </View>
-                <Icon name="search" size={18} color={colors.hint} />
+                <Icon name="chevron" size={18} color={colors.hint} />
               </Pressable>
             );
           })}
         </View>
       </View>
+      ) : null}
     </Page>
   );
 }
@@ -163,6 +275,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   recentLabel: { color: colors.primaryDark },
+  recentRemove: { fontSize: 16, lineHeight: 18, color: colors.primaryDark },
+  favoriteMark: { width: 44, textAlign: 'center', fontSize: 20, color: colors.primary },
+  favoriteTitle: { fontSize: 16 },
   suggestions: { borderTopWidth: 1, borderTopColor: colors.line },
   suggestion: {
     minHeight: 82,
@@ -175,4 +290,5 @@ const styles = StyleSheet.create({
   number: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   suggestionText: { flex: 1 },
   suggestionTitle: { marginBottom: 5, fontSize: 16 },
+  suggestionMeta: { fontSize: 13, color: colors.sub },
 });

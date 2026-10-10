@@ -74,6 +74,30 @@ class MeasureConverterTest {
     }
 
     @Test
+    void tsAndTsUnitsAreSpoonsAndCaseDecidesWhichOne() {
+        assertThat(convert("1Ts", Sensitivity.NORMAL, IngredientForm.LIQUID, RICE_SPOON, TEASPOON).text())
+                .isEqualTo(convert("1큰술", Sensitivity.NORMAL, IngredientForm.LIQUID, RICE_SPOON, TEASPOON).text());
+        assertThat(convert("1ts", Sensitivity.NORMAL, IngredientForm.LIQUID, RICE_SPOON, TEASPOON).text())
+                .isEqualTo(convert("1작은술", Sensitivity.NORMAL, IngredientForm.LIQUID, RICE_SPOON, TEASPOON).text());
+        assertThat(units.mlByUnit().get("Ts")).isEqualTo(15.0);
+        assertThat(units.mlByUnit().get("ts")).isEqualTo(5.0);
+        // Unknown spellings are not guessed.
+        assertThat(units.mlByUnit()).doesNotContainKey("TS");
+    }
+
+    @Test
+    void unitsAreShownInKoreanWithoutChangingTheNumber() {
+        assertThat(units.readable("1Ts", "Ts")).isEqualTo("1큰술");
+        assertThat(units.readable("1/2T", "T")).isEqualTo("1/2큰술");
+        assertThat(units.readable("2ts", "ts")).isEqualTo("2작은술");
+        assertThat(units.readable("1C", "C")).isEqualTo("1컵");
+        assertThat(units.readable("2큰술", "큰술")).isEqualTo("2큰술");
+        assertThat(units.readable("200g", "g")).isEqualTo("200g");
+        assertThat(units.readable("1개", "개")).isEqualTo("1개");
+        assertThat(units.readable("약간", null)).isEqualTo("약간");
+    }
+
+    @Test
     void ratioIngredientMustStayWithinTenPercentWhereAnOrdinaryOneMayBeTwentyFivePercentOff() {
         // 0.28큰술 = 4.2 mL = 0.42 rice spoons; the nearest picture is a half spoon, 19% more.
         MeasureResult ordinary = convert("0.28큰술", Sensitivity.NORMAL, IngredientForm.POWDER, RICE_SPOON);
@@ -273,6 +297,28 @@ class MeasureConverterTest {
 
         assertThat(result.status()).isEqualTo(QuantityStatus.NEEDS_CHECK);
         assertThat(result.text()).isEqualTo("150g");
+    }
+
+    @Test
+    void seasoningByWeightIsRoundedDownForAToolTheUserMeasured() {
+        // The user's bowl holds 260 mL instead of 300 mL, so it takes about 173 g instead of 200 g.
+        Variant measuredBowl = RICE_BOWL.withVolume(260);
+        WeightReference scaled = KIMCHI_IN_BOWL.get(0).scaledBy(260.0 / 300);
+
+        for (int grams = 100; grams <= 700; grams += 20) {
+            MeasureResult result = converter.convert(new MeasureConverter.Request(parser.parse(grams + "g"),
+                    Sensitivity.HIGH, IngredientForm.SOLID, true, List.of(RICE_SPOON, measuredBowl),
+                    List.of(scaled)));
+
+            assertThat(result.status()).isEqualTo(QuantityStatus.CONVERTED_APPROX);
+            // The guided amount never weighs more than the source says.
+            assertThat(result.count() * scaled.grams()).isLessThanOrEqualTo(grams + 1e-6);
+            assertThat(result.tasteAdjust()).isTrue();
+        }
+        // 300 g is 1.73 of this bowl: down to one and a half, never up to two.
+        MeasureResult threeHundred = converter.convert(new MeasureConverter.Request(parser.parse("300g"),
+                Sensitivity.HIGH, IngredientForm.SOLID, true, List.of(measuredBowl), List.of(scaled)));
+        assertThat(threeHundred.count()).isEqualTo(1.5);
     }
 
     @Test

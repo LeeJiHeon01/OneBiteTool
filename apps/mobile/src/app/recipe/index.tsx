@@ -9,12 +9,13 @@ import { AppText } from '@/components/text';
 import { TopBar } from '@/components/top-bar';
 import { findAllergyMatches, needsResearchNotice, RESEARCH_NOTICE } from '@/data/allergy';
 import { toolImage } from '@/data/images';
+import { isFavorite } from '@/data/library';
 import { BADGE_LABELS } from '@/data/recipe';
 import { useAppState } from '@/state/app-state';
 import { colors, fonts } from '@/theme/tokens';
 
 export default function RecipeScreen() {
-  const { allergenCodes, recipe } = useAppState();
+  const { allergenCodes, recipe, favorites, toggleFavorite } = useAppState();
   if (!recipe) return <Redirect href="/home" />;
 
   const hasAllergyMatch = findAllergyMatches(recipe.ingredients, allergenCodes).length > 0;
@@ -25,6 +26,7 @@ export default function RecipeScreen() {
   const choose = () =>
     router.push(hasAllergyMatch || needsAllergyCheck ? '/recipe/allergy-warning' : '/recipe/missing');
   const { sourceUrl } = recipe;
+  const favorite = isFavorite(favorites, recipe.id);
 
   return (
     <Page footer={<Button label="이 레시피로 할게요" onPress={choose} />}>
@@ -37,6 +39,17 @@ export default function RecipeScreen() {
               <AppText style={styles.sourceLink}>원문 보기 ↗</AppText>
             </Pressable>
           ) : null}
+          {/* Only the recipe's id and name are kept, on this device. */}
+          <Pressable
+            accessibilityLabel={favorite ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기'}
+            accessibilityRole="button"
+            accessibilityState={{ selected: favorite }}
+            hitSlop={12}
+            onPress={() => toggleFavorite({ id: recipe.id, name: recipe.name })}
+            style={styles.favorite}
+          >
+            <AppText style={[styles.favoriteMark, favorite && styles.favoriteOn]}>{favorite ? '★' : '☆'}</AppText>
+          </Pressable>
         </View>
         <AppText accessibilityRole="header" style={styles.title}>
           {recipe.name}
@@ -81,6 +94,7 @@ export default function RecipeScreen() {
           <View key={ingredient.id} style={[styles.ingredient, index > 0 && styles.ingredientBorder]}>
             <AppText style={styles.ingredientName}>
               {ingredient.name}
+              {ingredient.dictionaryName ? ` (${ingredient.dictionaryName})` : ''}
               {allergenCodes.length > 0 && ingredient.allergenProductVaries ? (
                 <AppText style={styles.productVaries}> 제품마다 달라요</AppText>
               ) : null}
@@ -115,6 +129,9 @@ const styles = StyleSheet.create({
   header: { paddingTop: 20, paddingBottom: 39, borderBottomWidth: 1, borderBottomColor: colors.line },
   source: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
   sourceLink: { fontSize: 12, color: colors.sub },
+  favorite: { marginLeft: 'auto' },
+  favoriteMark: { fontSize: 26, lineHeight: 30, color: colors.hint },
+  favoriteOn: { color: colors.primary },
   title: { fontFamily: fonts.extraBold, fontSize: 35, lineHeight: 42, letterSpacing: -0.8 },
   meta: { marginTop: 13, fontSize: 16, color: colors.sub },
   researchNotice: {

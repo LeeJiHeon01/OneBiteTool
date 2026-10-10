@@ -53,8 +53,10 @@ class ApiTest {
         assertThat(count("allergen")).isEqualTo(19);
         assertThat(count("fill_level")).isEqualTo(14);
         assertThat(count("safety_rule")).isEqualTo(12);
-        assertThat(count("adaptation_rule")).isEqualTo(4);
-        assertThat(count("tool_substitution_rule")).isEqualTo(1);
+        // 4 fixture/garnish rules + 14 generic substitutions between same-role ingredients
+        assertThat(count("adaptation_rule")).isEqualTo(18);
+        // knife -> scissors for the fixture, earthen pot -> pot for every recipe
+        assertThat(count("tool_substitution_rule")).isEqualTo(2);
         assertThat(count("recipe")).isEqualTo(1);
         assertThat(count("recipe_step")).isEqualTo(8);
     }
@@ -62,7 +64,8 @@ class ApiTest {
     @Test
     void imageTablesFollowTheManifest() {
         assertThat(count("image_group")).isEqualTo(8);
-        assertThat(count("image_file")).isEqualTo(71);
+        // 71 pictures + action.plate (finishing steps), which has no artwork yet
+        assertThat(count("image_file")).isEqualTo(72);
         assertThat(jdbc.sql("SELECT count(*) FROM image_file WHERE status = 'READY'").query(Long.class).single())
                 .isEqualTo(46);
         assertThat(jdbc.sql("SELECT file_path FROM image_file WHERE image_key = 'tool.teaspoon'")
@@ -118,6 +121,15 @@ class ApiTest {
                 .andExpect(jsonPath("$[0].variants[?(@.id == 'soju_glass')].isBasic").value(false))
                 .andExpect(jsonPath("$[2].variants[?(@.id == 'oven')].heatSourceType").value("OVEN"))
                 .andExpect(jsonPath("$[2].variants[0].heatSourceType").value("GAS"));
+    }
+
+    @Test
+    void suggestionsAreStoredRecipesInTheSearchResultShape() throws Exception {
+        mockMvc.perform(get("/api/recipes/suggestions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(recipeId))
+                .andExpect(jsonPath("$[0].name").value("김치볶음밥"))
+                .andExpect(jsonPath("$[0].allergenCodes").isArray());
     }
 
     @Test

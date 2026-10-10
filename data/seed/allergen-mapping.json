@@ -1837,6 +1837,66 @@
       "note": "'참깨'의 별칭에서 분리. 소금이 섞여 간에 영향",
       "verifiedBy": null,
       "verifiedAt": null
+    },
+    {
+      "ingredient": "broth",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-10",
+      "note": "멸치·다시마·채소로 우린 국물. 표시 대상 알레르기 없음. 시판 육수 제품은 성분이 다를 수 있음",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "beef_bone_broth",
+      "allergens": [
+        {
+          "code": "beef",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-10",
+      "note": "소뼈로 우린 국물",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "chicken_broth",
+      "allergens": [
+        {
+          "code": "chicken",
+          "hidden": false
+        }
+      ],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-10",
+      "note": "닭으로 우린 국물",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "minced_garlic",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-10",
+      "note": "'마늘'의 별칭에서 분리. 숟가락으로 뜨는 형태",
+      "verifiedBy": null,
+      "verifiedAt": null
+    },
+    {
+      "ingredient": "minced_ginger",
+      "allergens": [],
+      "productVaries": false,
+      "reviewLevel": "AI_RESEARCHED",
+      "researchedAt": "2026-10-10",
+      "note": "'생강'의 별칭에서 분리. 숟가락으로 뜨는 형태",
+      "verifiedBy": null,
+      "verifiedAt": null
     }
   ]
 }

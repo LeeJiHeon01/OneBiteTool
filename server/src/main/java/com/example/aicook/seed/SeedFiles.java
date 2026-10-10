@@ -52,7 +52,8 @@ final class SeedFiles {
     }
 
     record SafetyRule(String code, TriggerType triggerType, String triggerValue, String message,
-                      String detailForLow, Placement placement, String verifiedBy, String verifiedAt) {
+                      String detailForLow, Placement placement, boolean requiresHeat, String verifiedBy,
+                      String verifiedAt) {
     }
 
     // adaptation-rules.json

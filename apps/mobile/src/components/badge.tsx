@@ -3,12 +3,14 @@ import { StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/text';
 import { colors } from '@/theme/tokens';
 
-export type BadgeTone = 'info' | 'caution' | 'danger';
+export type BadgeTone = 'info' | 'caution' | 'danger' | 'calibrated';
 
 const TONES: Record<BadgeTone, { color: string; background: string }> = {
   info: { color: colors.info, background: colors.infoSoft },
   caution: { color: '#B66D00', background: colors.cautionSoft },
   danger: { color: colors.danger, background: colors.dangerSoft },
+  // An amount worked out with the volume the user measured for their own tool.
+  calibrated: { color: colors.success, background: colors.successSoft },
 };
 
 export function Badge({ label, tone }: { label: string; tone: BadgeTone }) {

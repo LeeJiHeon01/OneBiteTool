@@ -107,6 +107,14 @@ public class ReferenceRepository {
     }
 
     private List<Ingredient> loadIngredients() {
+        Map<String, List<String>> aliases = jdbc.sql("""
+                        SELECT i.code, a.alias FROM ingredient_alias a JOIN ingredient i ON i.id = a.ingredient_id
+                        ORDER BY a.id
+                        """)
+                .query((rs, row) -> Map.entry(rs.getString("code"), rs.getString("alias")))
+                .stream()
+                .collect(Collectors.groupingBy(Map.Entry::getKey,
+                        Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
         return jdbc.sql("""
                         SELECT code, name_ko, category, form, default_sensitivity, is_garnish,
                                allergen_review_level, allergen_product_varies
@@ -116,7 +124,8 @@ public class ReferenceRepository {
                         rs.getString("category"), rs.getString("form"),
                         Sensitivity.valueOf(rs.getString("default_sensitivity")),
                         rs.getBoolean("is_garnish"), reviewLevel(rs.getString("allergen_review_level")),
-                        rs.getBoolean("allergen_product_varies")))
+                        rs.getBoolean("allergen_product_varies"),
+                        aliases.getOrDefault(rs.getString("code"), List.of())))
                 .list();
     }
 
@@ -148,13 +157,14 @@ public class ReferenceRepository {
 
     private List<SafetyRule> loadSafetyRules() {
         return jdbc.sql("""
-                        SELECT code, trigger_type, trigger_value, message_ko, detail_low_ko, placement
+                        SELECT code, trigger_type, trigger_value, message_ko, detail_low_ko, placement,
+                               requires_heat
                         FROM safety_rule ORDER BY id
                         """)
                 .query((rs, row) -> new SafetyRule(rs.getString("code"),
                         TriggerType.valueOf(rs.getString("trigger_type")), rs.getString("trigger_value"),
                         rs.getString("message_ko"), rs.getString("detail_low_ko"),
-                        Placement.valueOf(rs.getString("placement"))))
+                        Placement.valueOf(rs.getString("placement")), rs.getBoolean("requires_heat")))
                 .list();
     }
 

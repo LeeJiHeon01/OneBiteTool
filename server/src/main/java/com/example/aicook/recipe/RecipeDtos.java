@@ -39,11 +39,14 @@ public final class RecipeDtos {
     /**
      * rawText is the amount as written in the source ("1큰술").
      *
+     * @param dictionaryName        the common name when the recipe uses another word for the same
+     *                              ingredient ("식물성 오일" is 식용유); null when it is the same or unknown
      * @param allergenReviewLevel   null when the mapping is not reviewed (same as allergyCheckNeeded);
      *                              AI_RESEARCHED is shown with "check the product label"
      * @param allergenProductVaries the allergens differ by product
      */
-    public record DetailIngredient(String id, String name, String rawText, List<AllergenRef> allergens,
+    public record DetailIngredient(String id, String name, String dictionaryName, String rawText,
+                                   List<AllergenRef> allergens,
                                    boolean allergyCheckNeeded, ReviewLevel allergenReviewLevel,
                                    boolean allergenProductVaries) {
     }

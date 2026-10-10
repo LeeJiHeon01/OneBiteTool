@@ -1,13 +1,213 @@
 {
   "status": "DRAFT",
-  "note": "생략·대체 규칙 초안(adaptation_rule, tool_substitution_rule 테이블로 동기화). verifiedBy가 DRAFT_UNVERIFIED인 것은 사람이 아직 검증하지 않은 규칙이다. recipeRef는 고정 레시피의 ref이고 null이면 모든 레시피에 적용한다. 같은 재료의 규칙은 priority가 작은 것부터 시도하며, 적용할 규칙이 없으면 조리 불가다(spec 2.2). 알레르기 재료의 대체에는 쓰지 않는다.",
+  "note": "생략·대체 규칙 초안(adaptation_rule, tool_substitution_rule 테이블로 동기화). verifiedBy가 DRAFT_UNVERIFIED인 것은 사람이 아직 검증하지 않은 규칙이다. recipeRef는 고정 레시피의 ref이고 null이면 모든 레시피에 적용한다. 같은 재료의 규칙은 priority가 작은 것부터 시도하며, 적용할 규칙이 없으면 조리 불가다(spec 2.2). 알레르기 재료의 대체에는 쓰지 않는다. mainIngredientCategories는 요리의 중심이 될 수 있는 재료 분류다(2026-10-09 사용자 결정). 없는 재료에 규칙이 없을 때: 요리 이름에 들어간 재료(분류와 상관없이, 예: 고추장불고기의 고추장)는 꼭 필요하다. 이 분류의 재료 중 요리 이름에 들어간 것이 하나도 없으면 이 분류의 재료가 모두 꼭 필요하다. 그 밖의 재료는 \"확인된 규칙 없이 빼고 만든다\"고 알리고 진행한다. recipeRef가 null인 SUBSTITUTE는 같은 역할을 하는 재료끼리의 범용 대체다(식용유↔올리브유·콩기름, 대파↔쪽파, 꿀↔올리고당, 맛술↔청주, 참기름↔들기름). 같은 양으로 바꿔 쓴다. 사용자에게 \"○○ 있나요?\"라고 물어 있을 때만 적용한다. 사용자가 피하는 알레르기가 든 재료, 알레르기 확인이 안 된 재료, 그 레시피에 이미 들어 있는 재료는 대체안으로 묻지 않는다.",
+  "mainIngredientCategories": [
+    "육류",
+    "해산물",
+    "곡물·면·떡",
+    "두부·콩",
+    "알·유제품"
+  ],
   "ingredientRules": [
-    { "type": "SUBSTITUTE", "ingredient": "sesame_oil", "substitute": "perilla_oil", "impact": null, "recipeRef": "kimchi-fried-rice", "priority": 1, "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" },
-    { "type": "OMIT", "ingredient": "sesame_oil", "substitute": null, "impact": "고소한 향이 약해질 수 있어요.", "recipeRef": "kimchi-fried-rice", "priority": 2, "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" },
-    { "type": "OMIT", "ingredient": "green_onion", "substitute": null, "impact": "향이 조금 약해질 수 있어요.", "recipeRef": "kimchi-fried-rice", "priority": 1, "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" },
-    { "type": "OMIT", "ingredient": "sesame", "substitute": null, "impact": null, "recipeRef": null, "priority": 1, "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" }
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "sesame_oil",
+      "substitute": "perilla_oil",
+      "impact": null,
+      "recipeRef": "kimchi-fried-rice",
+      "priority": 1,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-08T00:00:00Z"
+    },
+    {
+      "type": "OMIT",
+      "ingredient": "sesame_oil",
+      "substitute": null,
+      "impact": "고소한 향이 약해질 수 있어요.",
+      "recipeRef": "kimchi-fried-rice",
+      "priority": 2,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-08T00:00:00Z"
+    },
+    {
+      "type": "OMIT",
+      "ingredient": "green_onion",
+      "substitute": null,
+      "impact": "향이 조금 약해질 수 있어요.",
+      "recipeRef": "kimchi-fried-rice",
+      "priority": 1,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-08T00:00:00Z"
+    },
+    {
+      "type": "OMIT",
+      "ingredient": "sesame",
+      "substitute": null,
+      "impact": null,
+      "recipeRef": null,
+      "priority": 1,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-08T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "cooking_oil",
+      "substitute": "olive_oil",
+      "impact": "올리브유 향이 조금 날 수 있어요.",
+      "recipeRef": null,
+      "priority": 10,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "cooking_oil",
+      "substitute": "soybean_oil",
+      "impact": null,
+      "recipeRef": null,
+      "priority": 11,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "olive_oil",
+      "substitute": "cooking_oil",
+      "impact": "올리브유 향이 빠져요.",
+      "recipeRef": null,
+      "priority": 10,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "olive_oil",
+      "substitute": "soybean_oil",
+      "impact": "올리브유 향이 빠져요.",
+      "recipeRef": null,
+      "priority": 11,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "soybean_oil",
+      "substitute": "cooking_oil",
+      "impact": null,
+      "recipeRef": null,
+      "priority": 10,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "soybean_oil",
+      "substitute": "olive_oil",
+      "impact": "올리브유 향이 조금 날 수 있어요.",
+      "recipeRef": null,
+      "priority": 11,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "green_onion",
+      "substitute": "chives",
+      "impact": "쪽파는 대파보다 가늘어서 더 빨리 익어요.",
+      "recipeRef": null,
+      "priority": 10,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "chives",
+      "substitute": "green_onion",
+      "impact": "대파는 쪽파보다 굵고 향이 강해요.",
+      "recipeRef": null,
+      "priority": 10,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "honey",
+      "substitute": "oligo_syrup",
+      "impact": "단맛이 조금 약할 수 있어요.",
+      "recipeRef": null,
+      "priority": 10,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "oligo_syrup",
+      "substitute": "honey",
+      "impact": "꿀 향이 나고 단맛이 조금 강할 수 있어요.",
+      "recipeRef": null,
+      "priority": 10,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "cooking_wine",
+      "substitute": "cheongju",
+      "impact": "맛술보다 단맛이 적어요.",
+      "recipeRef": null,
+      "priority": 10,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "cheongju",
+      "substitute": "cooking_wine",
+      "impact": "맛술은 단맛이 있어 조금 달아질 수 있어요.",
+      "recipeRef": null,
+      "priority": 10,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "sesame_oil",
+      "substitute": "perilla_oil",
+      "impact": "참기름과 향이 달라요.",
+      "recipeRef": null,
+      "priority": 10,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    },
+    {
+      "type": "SUBSTITUTE",
+      "ingredient": "perilla_oil",
+      "substitute": "sesame_oil",
+      "impact": "들기름과 향이 달라요.",
+      "recipeRef": null,
+      "priority": 10,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    }
   ],
   "toolRules": [
-    { "requiredTool": "knife", "substituteTool": "scissors", "conditionNote": "김치·대파처럼 가위로 잘리는 재료만", "recipeRef": "kimchi-fried-rice", "extraSafetyNote": null, "verifiedBy": "DRAFT_UNVERIFIED", "verifiedAt": "2026-10-08T00:00:00Z" }
+    {
+      "requiredTool": "knife",
+      "substituteTool": "scissors",
+      "conditionNote": "김치·대파처럼 가위로 잘리는 재료만",
+      "recipeRef": "kimchi-fried-rice",
+      "extraSafetyNote": null,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-08T00:00:00Z"
+    },
+    {
+      "requiredTool": "earthen_pot",
+      "substituteTool": "pot",
+      "conditionNote": "냄비는 뚝배기보다 빨리 식어요.",
+      "recipeRef": null,
+      "extraSafetyNote": null,
+      "verifiedBy": "DRAFT_UNVERIFIED",
+      "verifiedAt": "2026-10-10T00:00:00Z"
+    }
   ]
 }

@@ -33,4 +33,6 @@ app:
   cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8081}
   # Recipe sites tried first when a dish is brought in from the web. Comma separated.
   preferred-recipe-sites: ${PREFERRED_RECIPE_SITES:10000recipe.com}
+  # Opens /api/maintenance (re-extracting stored recipes). Development only; off unless set.
+  maintenance-enabled: ${APP_MAINTENANCE_ENABLED:false}
 

@@ -147,7 +147,7 @@ class StepRewriterTest {
                                     Integer durationSeconds) {
         return new AdaptedStep(id, 1, action, "action.stir_fry", null, List.of("ING_KIMCHI"), toolIds, List.of(), durationSeconds, null,
                 heatLevel, null, null, null, "김치 부피가 줄면 다음으로 가세요.",
-                List.of(new SafetyNote("기름이 튈 수 있어요.", null)));
+                List.of(new SafetyNote("기름이 튈 수 있어요.", null)), List.of());
     }
 
     private static Variant tool(String id, String name) {
@@ -155,7 +155,7 @@ class StepRewriterTest {
     }
 
     private static Ingredient ingredient(String code, String name) {
-        return new Ingredient(code, name, "ETC", "SOLID", Sensitivity.HIGH, false, null, false);
+        return new Ingredient(code, name, "ETC", "SOLID", Sensitivity.HIGH, false, null, false, List.of());
     }
 
     /** Returns the prepared answers in order; an empty Optional once they run out. */

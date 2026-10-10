@@ -12,6 +12,7 @@ import com.example.aicook.adaptation.IngredientPlanner.Kind;
 import com.example.aicook.measure.IngredientForm;
 import com.example.aicook.measure.MeasureConverter;
 import com.example.aicook.measure.MeasureResult;
+import com.example.aicook.measure.MeasureResult.QuantityStatus;
 import com.example.aicook.measure.ParsedAmount;
 import com.example.aicook.measure.ParsedAmount.Amount;
 import com.example.aicook.recipe.Recipe;
@@ -21,14 +22,17 @@ import com.example.aicook.recipe.RecipeService;
 import com.example.aicook.reference.ReferenceData;
 import com.example.aicook.reference.Rules.AllergenRef;
 import com.example.aicook.reference.Rules.Ingredient;
+import com.example.aicook.reference.Rules.WeightReference;
 import com.example.aicook.reference.Sensitivity;
 import com.example.aicook.reference.Tools.Variant;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -73,19 +77,22 @@ public class AdaptationService {
             // Nothing is confirmed yet, so no amounts or steps are returned.
             return new AdaptationResponse(newId(), status, RecipeService.badgeOf(recipe), recipe.sourceUrl(),
                     List.of(), List.of(), ingredientPlan.pendingQuestions(), List.of(), requiredItems, List.of(),
-                    List.of(), List.of());
+                    List.of(), List.of(), conditions.ignoredCustomTools());
         }
 
         StepAssembler.Result steps = stepAssembler.assemble(recipe, conditions, ingredientPlan, toolPlan);
         List<Change> changes = concat(ingredientPlan.changes(), toolPlan.changes());
         List<AdaptedIngredient> ingredients = adaptIngredients(recipe, conditions, ingredientPlan);
+        // The same action on several ingredients in a row is shown as one step; the stored recipe stays as it is.
+        List<AdaptedStep> joinedSteps = StepMerger.mergePlating(StepMerger.merge(steps.steps(), ingredients.stream()
+                .collect(Collectors.toMap(AdaptedIngredient::ingredientId, AdaptedIngredient::name))));
         // The AI only rewords the finished steps; amounts, time, heat and safety notes are final here.
-        List<AdaptedStep> rewordedSteps = stepRewriter.rewrite(conditions.skillLevel(), steps.steps(), ingredients,
+        List<AdaptedStep> rewordedSteps = stepRewriter.rewrite(conditions.skillLevel(), joinedSteps, ingredients,
                 changes);
         return new AdaptationResponse(newId(), status, RecipeService.badgeOf(recipe), recipe.sourceUrl(),
                 allergyWarnings(recipe, conditions, ingredientPlan),
                 allergyCheckNeeded(recipe, conditions, ingredientPlan), List.of(), changes, List.of(),
-                steps.safetySummary(), ingredients, rewordedSteps);
+                steps.safetySummary(), ingredients, rewordedSteps, conditions.ignoredCustomTools());
     }
 
     private Status statusOf(List<RequiredItem> requiredItems, IngredientPlanner.Plan plan) {
@@ -98,18 +105,38 @@ public class AdaptationService {
     private List<AdaptedIngredient> adaptIngredients(Recipe recipe, Conditions conditions,
                                                      IngredientPlanner.Plan plan) {
         // Sorted so equally good tools are always picked in the same order.
+        // A tool the user measured holds that volume for this request instead of the representative one.
+        Map<String, Double> customVolumes = conditions.customVolumes();
         List<Variant> ownedTools = conditions.toolIds().stream()
                 .sorted()
                 .map(id -> reference.tool(id).orElseThrow())
+                .map(tool -> customVolumes.containsKey(tool.id()) ? tool.withVolume(customVolumes.get(tool.id())) : tool)
                 .toList();
         return usedIngredients(recipe, plan)
-                .map(ingredient -> adaptIngredient(recipe, ingredient, plan, ownedTools, conditions.skillLevel()))
+                .map(ingredient -> adaptIngredient(recipe, ingredient, plan, ownedTools, conditions))
+                .toList();
+    }
+
+    /**
+     * "This ingredient weighs N grams in tool X" holds for the representative volume of the tool,
+     * so for a tool the user measured the grams are scaled by the same ratio.
+     */
+    private List<WeightReference> weightReferencesFor(String dictionaryCode, Map<String, Double> customVolumes) {
+        return reference.weightReferencesOf(dictionaryCode).stream()
+                .map(weight -> {
+                    Double custom = customVolumes.get(weight.toolId());
+                    Double representative = reference.tool(weight.toolId()).map(Variant::representativeVolumeMl)
+                            .orElse(null);
+                    return custom == null || representative == null ? weight
+                            : weight.scaledBy(custom / representative);
+                })
                 .toList();
     }
 
     private AdaptedIngredient adaptIngredient(Recipe recipe, Recipe.Ingredient ingredient,
                                               IngredientPlanner.Plan plan, List<Variant> ownedTools,
-                                              SkillLevel skillLevel) {
+                                              Conditions conditions) {
+        SkillLevel skillLevel = conditions.skillLevel();
         String dictionaryCode = StepAssembler.effectiveDictionaryCode(recipe, ingredient.id(), plan);
         Optional<Ingredient> entry = reference.ingredient(dictionaryCode);
         boolean substituted = plan.of(ingredient.id()).kind() == Kind.SUBSTITUTE;
@@ -120,14 +147,32 @@ public class AdaptationService {
         boolean weightAsTool = skillLevel == SkillLevel.LOW;
 
         MeasureResult measure = measureConverter.convert(new MeasureConverter.Request(toAmount(ingredient),
-                sensitivity, form, weightAsTool, ownedTools, reference.weightReferencesOf(dictionaryCode)));
+                sensitivity, form, weightAsTool, ownedTools,
+                weightReferencesFor(dictionaryCode, conditions.customVolumes())));
         // The source amount is always returned next to the converted one.
-        Original original = new Original(ingredient.quantity(), ingredient.unit(), ingredient.amountText());
+        // Units are shown in Korean ("2Ts" as "2큰술"); the number is the source's own.
+        String sourceAmount = reference.units().readable(ingredient.amountText(), ingredient.unit());
+        Original original = new Original(ingredient.quantity(), ingredient.unit(), sourceAmount);
         // A recipe that states no amount gets a plain notice, never a made-up amount.
-        String text = measure.text() == null || measure.text().isBlank() ? NO_AMOUNT_TEXT : measure.text();
+        String text0 = measure.text() == null || measure.text().isBlank() ? NO_AMOUNT_TEXT
+                // An amount that could not be converted is shown as written, with a readable unit.
+                : measure.text().equals(ingredient.amountText()) ? sourceAmount : measure.text();
+        String text = text0;
+        // An ingredient outside the dictionary is still never rounded up, but the app does not know
+        // whether it is seasoning: it is marked "needs checking" instead of "taste and add".
+        boolean unknown = entry.isEmpty();
+        if (unknown && toAmount(ingredient).vague()) {
+            text = sourceAmount == null || sourceAmount.isBlank() ? NO_AMOUNT_TEXT : sourceAmount;
+        }
+        QuantityStatus status = unknown && measure.status() == QuantityStatus.CONVERTED_APPROX
+                ? QuantityStatus.NEEDS_CHECK : measure.status();
+        // A weight still rests on an assumed grams-per-tool value, so only volumes count as user-measured.
+        boolean userMeasured = measure.status() == QuantityStatus.CONVERTED_APPROX
+                && ingredient.unitKind() != UnitKind.WEIGHT
+                && conditions.customVolumes().containsKey(measure.toolVariantId());
         Display display = new Display(measure.toolVariantId(), measure.fillLevelKey(), measure.count(),
-                text, measure.tasteAdjust());
-        return new AdaptedIngredient(ingredient.id(), name, original, display, measure.status(), sensitivity,
+                text, measure.tasteAdjust() && !unknown, userMeasured);
+        return new AdaptedIngredient(ingredient.id(), name, original, display, status, sensitivity,
                 reference.allergenProductVaries(dictionaryCode));
     }
 

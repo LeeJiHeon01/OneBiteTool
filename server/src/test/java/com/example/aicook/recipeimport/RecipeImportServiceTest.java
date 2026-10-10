@@ -12,7 +12,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
@@ -33,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 // The API key is cleared so tests never call the AI API.
 @SpringBootTest(properties = {"spring.datasource.url=${SPRING_DATASOURCE_TEST_URL}", "openai.api-key="})
+@ExtendWith(OutputCaptureExtension.class)
 class RecipeImportServiceTest {
 
     private static final String DISH = "테스트된장찌개";
@@ -185,6 +189,64 @@ class RecipeImportServiceTest {
 
         assertThat(job.status()).isEqualTo(Status.DONE);
         assertThat(recipes.find(job.recipeId()).sourceUrl()).isEqualTo(URL_B);
+    }
+
+    @Test
+    void manyMoreStepsThanThePageHasIsLoggedAsAWarning(CapturedOutput output) {
+        client.answers.add(SEARCH);
+        // The page has one numbered step; two were extracted (more than 1.5 times).
+        client.answers.add(extract(300, "중불에서 5분 끓입니다").replace("\"isRecipe\":true,",
+                "\"isRecipe\":true,\"sourceStepCount\":1,"));
+
+        assertThat(runImport().status()).isEqualTo(Status.DONE);
+        assertThat(output.getOut()).contains("2 steps extracted from 1 source steps");
+    }
+
+    @Test
+    void stepsWithinThePagesOwnCountAreNotReported(CapturedOutput output) {
+        client.answers.add(SEARCH);
+        client.answers.add(extract(300, "중불에서 5분 끓입니다").replace("\"isRecipe\":true,",
+                "\"isRecipe\":true,\"sourceStepCount\":2,"));
+
+        assertThat(runImport().status()).isEqualTo(Status.DONE);
+        assertThat(output.getOut()).doesNotContain("steps extracted from");
+    }
+
+    @Test
+    void storedRecipeIsReplacedByANewExtractOfTheSamePage() {
+        client.answers.add(SEARCH);
+        client.answers.add(extract(300, "중불에서 5분 끓입니다"));
+        ImportJob job = runImport();
+        // The new extract keeps the page's two steps in one, as the page has them.
+        client.answers.add(extract(300, "중불에서 5분 끓입니다")
+                .replace("\"isRecipe\":true,", "\"isRecipe\":true,\"sourceStepCount\":2,")
+                .replace("두부를 넣고 끓여요", "두부를 넣고 뭉근히 끓여요"));
+
+        RecipeImportService.Reextracted result = service.reextract(job.recipeId());
+
+        assertThat(result.rejectedBecause()).isNull();
+        assertThat(result.stepsBefore()).isEqualTo(2);
+        assertThat(result.stepsAfter()).isEqualTo(2);
+        assertThat(result.newRecipeId()).isNotEqualTo(job.recipeId());
+        assertThat(recipes.find(result.newRecipeId()).steps().get(1).action()).isEqualTo("두부를 넣고 뭉근히 끓여요");
+        assertThat(recipes.find(result.newRecipeId()).sourceUrl()).isEqualTo(URL_A);
+        // The same search keeps finding the recipe.
+        assertThat(service.find(job.id()).recipeId()).isEqualTo(result.newRecipeId());
+        assertThat(importedRecipeCount()).isEqualTo(1);
+    }
+
+    @Test
+    void storedRecipeIsKeptWhenTheNewExtractFailsTheCheck() {
+        client.answers.add(SEARCH);
+        client.answers.add(extract(300, "중불에서 5분 끓입니다"));
+        ImportJob job = runImport();
+        client.answers.add(extract(600, "중불에서 5분 끓입니다"));
+
+        RecipeImportService.Reextracted result = service.reextract(job.recipeId());
+
+        assertThat(result.rejectedBecause()).isEqualTo("TIME_NOT_IN_PAGE");
+        assertThat(result.newRecipeId()).isNull();
+        assertThat(recipes.find(job.recipeId()).steps()).hasSize(2);
     }
 
     @Test

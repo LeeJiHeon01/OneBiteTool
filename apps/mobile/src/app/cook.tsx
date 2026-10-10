@@ -1,5 +1,6 @@
 import { Redirect, router } from 'expo-router';
-import { useState } from 'react';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AllSteps, MiniTimer } from '@/components/all-steps';
@@ -10,6 +11,8 @@ import { AppText } from '@/components/text';
 import { findAllergyMatches } from '@/data/allergy';
 import { useAppState } from '@/state/app-state';
 import { colors } from '@/theme/tokens';
+
+const KEEP_AWAKE_TAG = 'cooking';
 
 function ViewToggle({ fullView, onChange }: { fullView: boolean; onChange: (fullView: boolean) => void }) {
   return (
@@ -41,6 +44,16 @@ function ViewToggle({ fullView, onChange }: { fullView: boolean; onChange: (full
 export default function CookScreen() {
   const { adaptation, recipe, allergenCodes, heatSource, cookStepIndex, setCookStepIndex } = useAppState();
   const [fullView, setFullView] = useState(false);
+
+  // The screen stays on while this screen is open (hands are busy), and only then.
+  useEffect(() => {
+    // Not every browser or device supports it; cooking works the same without it.
+    activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => undefined);
+    return () => {
+      deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => undefined);
+    };
+  }, []);
+
   if (!adaptation || adaptation.steps.length === 0) return <Redirect href="/home" />;
 
   const { steps } = adaptation;

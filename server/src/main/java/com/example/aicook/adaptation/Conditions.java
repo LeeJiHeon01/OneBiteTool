@@ -1,5 +1,6 @@
 package com.example.aicook.adaptation;
 
+import com.example.aicook.adaptation.AdaptationRequest.CustomToolVolume;
 import com.example.aicook.adaptation.AdaptationRequest.Profile;
 import com.example.aicook.adaptation.AdaptationRequest.SubstituteAnswer;
 import com.example.aicook.common.ApiException;
@@ -19,10 +20,14 @@ import java.util.stream.Collectors;
  * A validated adaptation request. Every id has been checked against the recipe and the
  * reference data, so the planners can trust it.
  *
- * @param answers "ingredientId/substituteId" -> whether the user has the substitute
+ * @param answers       "ingredientId/substituteId" -> whether the user has the substitute
+ * @param customVolumes      tool id -> volume in mL the user measured for a tool they own; only
+ *                           accepted values are kept
+ * @param ignoredCustomTools tools whose measured volume was sent but not accepted, in a stable order
  */
 record Conditions(SkillLevel skillLevel, Set<String> toolIds, String heatSource, Set<String> allergenCodes,
-                  Set<String> missingIngredientIds, Map<String, Boolean> answers) {
+                  Set<String> missingIngredientIds, Map<String, Boolean> answers,
+                  Map<String, Double> customVolumes, List<String> ignoredCustomTools) {
 
     private static final String GAS = "gas_stove";
     private static final String INDUCTION = "induction";
@@ -45,8 +50,39 @@ record Conditions(SkillLevel skillLevel, Set<String> toolIds, String heatSource,
         Set<String> missing = toSet(orEmpty(request.missingIngredientIds()));
         requireKnown(missing, recipeIngredientIds::contains, "UNKNOWN_INGREDIENT", "레시피에 없는 재료가 있어요.");
 
+        Map<String, Double> customVolumes = toCustomVolumes(orEmpty(profile.customToolVolumes()), toolIds, reference);
         return new Conditions(profile.skillLevel(), toolIds, resolveHeatSource(toolIds, profile.defaultHeatSource()),
-                allergenCodes, missing, toAnswers(orEmpty(request.substituteAnswers()), recipeIngredientIds));
+                allergenCodes, missing, toAnswers(orEmpty(request.substituteAnswers()), recipeIngredientIds),
+                customVolumes, ignoredCustomTools(orEmpty(profile.customToolVolumes()), customVolumes, reference));
+    }
+
+    /** Known tools that were sent with a volume the server did not use; unknown codes are not echoed back. */
+    private static List<String> ignoredCustomTools(List<CustomToolVolume> volumes, Map<String, Double> accepted,
+                                                   ReferenceData reference) {
+        return volumes.stream()
+                .filter(Objects::nonNull)
+                .map(CustomToolVolume::toolCode)
+                .filter(Objects::nonNull)
+                .filter(code -> !accepted.containsKey(code) && reference.tool(code).isPresent())
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    /**
+     * A value for a tool the user does not own, a tool that cannot be measured this way or a
+     * volume outside the accepted range is dropped, so that tool keeps its representative volume.
+     */
+    private static Map<String, Double> toCustomVolumes(List<CustomToolVolume> volumes, Set<String> toolIds,
+                                                       ReferenceData reference) {
+        Map<String, Double> result = new HashMap<>();
+        for (CustomToolVolume volume : volumes) {
+            if (volume != null && volume.toolCode() != null && toolIds.contains(volume.toolCode())
+                    && reference.units().acceptsCustomVolume(volume.toolCode(), volume.volumeMl())) {
+                result.put(volume.toolCode(), volume.volumeMl());
+            }
+        }
+        return result;
     }
 
     Boolean answerFor(String ingredientId, String substituteId) {

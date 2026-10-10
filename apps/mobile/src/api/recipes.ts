@@ -42,6 +42,7 @@ type DetailDto = {
 
 type AdaptationDto = {
   status: Adaptation['status'];
+  ignoredCustomTools?: string[];
   allergyWarnings: { allergenCode: string; ingredientId: string; hidden: boolean }[];
   allergyCheckNeededIngredientIds: string[];
   pendingQuestions: { ingredientId: string; substituteId: string; substituteName: string }[];
@@ -52,7 +53,13 @@ type AdaptationDto = {
     ingredientId: string;
     name: string;
     original: { rawText: string };
-    display: { toolVariantId: string | null; count: number | null; text: string; tasteAdjust: boolean };
+    display: {
+      toolVariantId: string | null;
+      count: number | null;
+      text: string;
+      tasteAdjust: boolean;
+      userMeasured: boolean;
+    };
     quantityStatus: QuantityStatus;
     allergenProductVaries: boolean;
   }[];
@@ -68,6 +75,7 @@ type AdaptationDto = {
     deviceSettingRaw: string | null;
     completionCheck: string | null;
     safetyNotes: { message: string; detail: string | null }[];
+    subItems: { stepId: string; text: string; ingredientIds: string[] }[];
   }[];
 };
 
@@ -85,6 +93,8 @@ export type AdaptationInput = {
   substituteAnswers: SubstituteAnswer[];
   skillLevel: SkillLevel;
   toolIds: string[];
+  // Volumes the user measured for their own tools; the server converts with them and stores nothing.
+  customToolVolumes: { toolCode: string; volumeMl: number }[];
   heatSource: HeatSource;
   allergenCodes: string[];
 };
@@ -97,6 +107,7 @@ const ACTIONS: Record<string, { label: string; icon: IconName }> = {
   'action.grill': { label: '굽기', icon: 'pan' },
   'action.add': { label: '넣기', icon: 'spoon' },
   'action.mix': { label: '섞기', icon: 'spoon' },
+  'action.plate': { label: '담기', icon: 'spoon' },
 };
 const OTHER_ACTION = { label: '조리', icon: 'sparkle' as IconName };
 
@@ -185,6 +196,7 @@ function toIngredient(dto: AdaptationDto, row: AdaptationDto['ingredients'][numb
     visualToolId: row.display.toolVariantId,
     quantityStatus: row.quantityStatus,
     tasteAdjust: row.display.tasteAdjust,
+    userMeasured: row.display.userMeasured === true,
     allergens: dto.allergyWarnings
       .filter((warning) => warning.ingredientId === row.ingredientId)
       .map((warning) => ({ code: warning.allergenCode, hidden: warning.hidden })),
@@ -208,6 +220,11 @@ function toStep(step: AdaptationDto['steps'][number]): AdaptedStep {
     timerStartCondition: step.timerStartCondition,
     completionCheck: step.completionCheck,
     safetyNotes: step.safetyNotes.map((note) => (note.detail ? `${note.message} ${note.detail}` : note.message)),
+    subItems: (step.subItems ?? []).map((item) => ({
+      id: item.stepId,
+      text: item.text,
+      ingredientIds: item.ingredientIds,
+    })),
   };
 }
 
@@ -226,11 +243,18 @@ function toAdaptation(dto: AdaptationDto, recipe: Recipe): Adaptation {
     safetySummary: dto.safetySummary,
     ingredients: dto.ingredients.map((row) => toIngredient(dto, row)),
     steps: dto.steps.map(toStep),
+    ignoredCustomToolIds: dto.ignoredCustomTools ?? [],
   };
 }
 
 export async function searchRecipes(query: string): Promise<SearchResult[]> {
   const results = await get<SearchResultDto[]>(`/api/recipes?q=${encodeURIComponent(query)}`);
+  return results.map(toSearchResult);
+}
+
+// Recipes the server already has; opening one needs no web import.
+export async function fetchSuggestions(): Promise<SearchResult[]> {
+  const results = await get<SearchResultDto[]>('/api/recipes/suggestions');
   return results.map(toSearchResult);
 }
 
@@ -262,6 +286,7 @@ export async function adaptRecipe(input: AdaptationInput): Promise<Adaptation> {
       toolVariantIds: input.toolIds,
       defaultHeatSource: input.heatSource,
       allergenCodes: input.allergenCodes,
+      customToolVolumes: input.customToolVolumes,
     },
   });
   return toAdaptation(dto, input.recipe);

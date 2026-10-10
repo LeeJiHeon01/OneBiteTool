@@ -141,7 +141,8 @@ public class MeasureConverter {
         }
         List<String> spoonOrder = units.toolsFor(volume.unit());
         boolean spoonUnit = spoonOrder != null && !spoonOrder.isEmpty();
-        if (!spoonUnit && request.form() == IngredientForm.SOLID) {
+        // A cup or bowl only measures what can be poured; paste, powder and solids keep the source amount.
+        if (!spoonUnit && request.form() != IngredientForm.LIQUID) {
             return MeasureResult.unconverted(rawText, false, QuantityStatus.ORIGINAL);
         }
         double ml = toMl(volume);

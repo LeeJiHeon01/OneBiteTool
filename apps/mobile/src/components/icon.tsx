@@ -18,7 +18,8 @@ export type IconName =
   | 'sparkle'
   | 'shield'
   | 'alert'
-  | 'chevron';
+  | 'chevron'
+  | 'speaker';
 
 // Shapes drawn on a 24x24 grid; stroke and fill are inherited from the parent.
 export const ICON_SHAPES: Record<IconName, ReactNode> = {
@@ -52,6 +53,13 @@ export const ICON_SHAPES: Record<IconName, ReactNode> = {
     <>
       <Path d="m14 4-8 9h8V4Z" />
       <Path d="M14 13v7" />
+    </>
+  ),
+  speaker: (
+    <>
+      <Path d="M11 5 6 9H3v6h3l5 4V5Z" />
+      <Path d="M15.5 8.5a5 5 0 0 1 0 7" />
+      <Path d="M18.5 5.5a9 9 0 0 1 0 13" />
     </>
   ),
   spoon: (

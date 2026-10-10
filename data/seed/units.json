@@ -1,11 +1,12 @@
 {
   "status": "DRAFT",
-  "note": "원문 단위를 해석하는 기준이다(spec 4.2, 4.7). standardTool은 그 단위를 변환 없이 원래대로 보여주게 하는 표준 계량 도구다. tools는 숟가락 단위를 어떤 숟가락으로 먼저 바꿀지의 순서다(큰술은 밥숟가락, 작은술은 티스푼). volumeTools는 ml·컵을 바꿀 때 컵 다음에 시도하는 용기의 순서다(생수병이 그릇보다 먼저). normalToleranceRatio(일반 재료 25%)와 ratioToleranceRatio(비율이 중요한 재료 10%)는 변환 오차의 허용 범위다(결정 D-6). 넘으면 변환하지 않고 원문 + 확인 필요로 둔다.",
+  "note": "원문 단위를 해석하는 기준이다(spec 4.2, 4.7). standardTool은 그 단위를 변환 없이 원래대로 보여주게 하는 표준 계량 도구다. tools는 숟가락 단위를 어떤 숟가락으로 먼저 바꿀지의 순서다(큰술은 밥숟가락, 작은술은 티스푼). volumeTools는 ml·컵을 바꿀 때 컵 다음에 시도하는 용기의 순서다(생수병이 그릇보다 먼저). normalToleranceRatio(일반 재료 25%)와 ratioToleranceRatio(비율이 중요한 재료 10%)는 변환 오차의 허용 범위다(결정 D-6). 넘으면 변환하지 않고 원문 + 확인 필요로 둔다. customVolumeTools는 사용자가 생수병 기준으로 용량을 직접 맞출 수 있는 도구이고, customVolumeMinMl~customVolumeMaxMl 밖의 값은 서버가 받지 않는다(spec 4.8).",
   "volumeUnits": [
     {
       "labels": [
         "큰술",
         "T",
+        "Ts",
         "Tbsp",
         "테이블스푼"
       ],
@@ -20,6 +21,7 @@
       "labels": [
         "작은술",
         "t",
+        "ts",
         "tsp",
         "티스푼"
       ],
@@ -74,12 +76,23 @@
     "톡톡"
   ],
   "normalToleranceRatio": 0.25,
-  "ratioToleranceRatio": 0.10,
+  "ratioToleranceRatio": 0.1,
   "volumeTools": [
     "water_bottle_500",
     "rice_cup",
     "soju_glass",
     "rice_bowl",
     "soup_bowl"
-  ]
+  ],
+  "customVolumeTools": [
+    "paper_cup_small",
+    "paper_cup_large",
+    "glass_cup",
+    "rice_bowl",
+    "soup_bowl",
+    "rice_cup",
+    "soju_glass"
+  ],
+  "customVolumeMinMl": 20,
+  "customVolumeMaxMl": 1000
 }

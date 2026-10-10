@@ -27,7 +27,7 @@ function Row({ label, value, onPress }: { label: string; value?: string; onPress
 }
 
 export default function SettingsScreen() {
-  const { skillLevel, toolIds, allergenCodes, clearAll } = useAppState();
+  const { skillLevel, toolIds, allergenCodes, cookRecords, clearAll } = useAppState();
   const [deleteSheet, setDeleteSheet] = useState(false);
   const edit = (pathname: '/onboarding/level' | '/onboarding/tools' | '/onboarding/allergy') => () =>
     router.push({ pathname, params: { edit: '1' } } as Href);
@@ -55,6 +55,8 @@ export default function SettingsScreen() {
           value={allergenCodes.length > 0 ? `${allergenCodes.length}개` : '없음'}
         />
         <View style={styles.divider} />
+        <Row label="내 요리 기록" onPress={() => router.push('/history' as Href)} value={`${cookRecords.length}개`} />
+        <View style={styles.divider} />
         {/* Notification settings and app info screens are not designed yet. */}
         <Row label="알림 설정" />
         <Row label="앱 정보" />
@@ -67,7 +69,7 @@ export default function SettingsScreen() {
       </View>
       <AppText style={styles.note}>양은 대표적인 도구 크기를 기준으로 한 대략적인 값이에요.</AppText>
       <BottomSheet
-        description="실력·도구·알레르기 정보가 이 기기에서 삭제돼요."
+        description="실력·도구·알레르기 정보와 검색·즐겨찾기·요리 기록이 이 기기에서 삭제돼요."
         icon="alert"
         iconTone="danger"
         onClose={() => setDeleteSheet(false)}

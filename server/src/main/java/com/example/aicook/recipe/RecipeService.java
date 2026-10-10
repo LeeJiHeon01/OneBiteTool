@@ -16,6 +16,8 @@ import java.util.List;
 @Service
 public class RecipeService {
 
+    private static final int SUGGESTION_COUNT = 6;
+
     private final RecipeRepository recipes;
     private final ReferenceData reference;
 
@@ -31,6 +33,11 @@ public class RecipeService {
             throw ApiException.badRequest("EMPTY_QUERY", "검색어를 입력해 주세요.");
         }
         return recipes.searchByName(needle).stream().map(this::toSearchResult).toList();
+    }
+
+    /** Recipes already stored, for the home screen: they open at once, without a web import. */
+    public List<SearchResult> suggestions() {
+        return recipes.findStored(SUGGESTION_COUNT).stream().map(this::toSearchResult).toList();
     }
 
     public Detail detail(String id) {
@@ -76,7 +83,13 @@ public class RecipeService {
 
     private DetailIngredient toDetailIngredient(Recipe.Ingredient ingredient) {
         var allergens = reference.allergensOf(ingredient.dictionaryCode());
-        return new DetailIngredient(ingredient.id(), ingredient.name(), ingredient.amountText(),
+        // Shown next to the recipe's own word so the user recognises what they already have.
+        String dictionaryName = reference.ingredient(ingredient.dictionaryCode())
+                .map(entry -> entry.name())
+                .filter(name -> !ingredient.name().contains(name))
+                .orElse(null);
+        return new DetailIngredient(ingredient.id(), ingredient.name(), dictionaryName,
+                reference.units().readable(ingredient.amountText(), ingredient.unit()),
                 allergens.orElse(List.of()), !reference.isAllergenReviewed(ingredient.dictionaryCode()),
                 reference.allergenReviewLevel(ingredient.dictionaryCode()),
                 reference.allergenProductVaries(ingredient.dictionaryCode()));

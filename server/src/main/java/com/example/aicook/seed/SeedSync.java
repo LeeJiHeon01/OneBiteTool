@@ -184,9 +184,9 @@ public class SeedSync {
     }
 
     /**
-     * Stored recipe ingredients that had no dictionary entry are matched again, so a recipe
-     * imported earlier gains allergens and safety notes when the dictionary grows. Exact name
-     * or alias only; an existing link is never changed.
+     * Stored recipe ingredients are matched to the dictionary again by exact name or alias, so a
+     * recipe imported earlier follows the dictionary when it grows or when a name moves to an
+     * entry of its own (다진마늘 out of 마늘). A name the dictionary does not have keeps its link.
      */
     private void linkUnmatchedRecipeIngredients() {
         int linked = jdbc.sql("""
@@ -195,7 +195,7 @@ public class SeedSync {
                         FROM (SELECT id, name_ko AS name FROM ingredient
                               UNION
                               SELECT ingredient_id, alias FROM ingredient_alias) known
-                        WHERE ri.ingredient_id IS NULL AND ri.name_ko = known.name
+                        WHERE ri.name_ko = known.name AND ri.ingredient_id IS DISTINCT FROM known.id
                         """)
                 .update();
         if (linked > 0) {
@@ -294,9 +294,9 @@ public class SeedSync {
             }
             jdbc.sql("""
                             INSERT INTO safety_rule (code, trigger_type, trigger_value, message_ko, detail_low_ko,
-                                                     placement, verified_by, verified_at)
+                                                     placement, requires_heat, verified_by, verified_at)
                             VALUES (:code, :triggerType, :triggerValue, :message, :detail, :placement,
-                                    :verifiedBy, :verifiedAt)
+                                    :requiresHeat, :verifiedBy, :verifiedAt)
                             """)
                     .param("code", rule.code())
                     .param("triggerType", rule.triggerType().name())
@@ -304,6 +304,7 @@ public class SeedSync {
                     .param("message", rule.message())
                     .param("detail", rule.detailForLow())
                     .param("placement", rule.placement().name())
+                    .param("requiresHeat", rule.requiresHeat())
                     .param("verifiedBy", rule.verifiedBy())
                     .param("verifiedAt", toTime(rule.verifiedAt()))
                     .update();

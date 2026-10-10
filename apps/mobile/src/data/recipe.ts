@@ -32,6 +32,8 @@ export type ReviewLevel = 'HUMAN_VERIFIED' | 'AI_RESEARCHED';
 export type RecipeIngredient = {
   id: string;
   name: string;
+  // Common name when the recipe uses another word for it ("식물성 오일" is 식용유); null otherwise.
+  dictionaryName: string | null;
   // Amount as written in the source; always shown.
   rawText: string;
   allergens: AllergenRef[];
@@ -64,6 +66,8 @@ export type AdaptedIngredient = {
   quantityStatus: QuantityStatus;
   // Seasoning: never rounded up, the user tastes and adds.
   tasteAdjust: boolean;
+  // Converted with the volume the user measured for their own tool, not the representative one.
+  userMeasured: boolean;
   // Only the allergens the user asked to avoid.
   allergens: AllergenRef[];
   allergyCheckNeeded: boolean;
@@ -86,7 +90,11 @@ export type AdaptedStep = {
   timerStartCondition: string | null;
   completionCheck: string | null;
   safetyNotes: string[];
+  // Checklist of a finishing step (plating, topping). Ticking is optional; empty for other steps.
+  subItems: StepSubItem[];
 };
+
+export type StepSubItem = { id: string; text: string; ingredientIds: string[] };
 
 export type PendingQuestion = { ingredientId: string; substituteId: string; title: string; description: string };
 
@@ -98,6 +106,8 @@ export type Adaptation = {
   safetySummary: string[];
   ingredients: AdaptedIngredient[];
   steps: AdaptedStep[];
+  // Tools whose measured volume the server did not accept; their amounts use the representative volume.
+  ignoredCustomToolIds: string[];
 };
 
 export const BADGE_LABELS: Record<RecipeBadge, string> = {

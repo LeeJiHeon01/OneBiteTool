@@ -49,6 +49,18 @@ public class RecipeRepository {
                 .list();
     }
 
+    /** Stored recipes, the ones kept for demos first, then the most recently imported. */
+    public List<Recipe> findStored(int limit) {
+        return jdbc.sql("""
+                        SELECT * FROM recipe
+                        ORDER BY (source = 'FIXTURE') DESC, id DESC
+                        LIMIT :limit
+                        """)
+                .param("limit", limit)
+                .query((rs, row) -> toRecipe(rs))
+                .list();
+    }
+
     private Recipe toRecipe(ResultSet rs) throws SQLException {
         String id = rs.getString("id");
         return new Recipe(id, rs.getString("name"), Source.valueOf(rs.getString("source")),

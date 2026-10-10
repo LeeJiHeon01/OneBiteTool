@@ -11,6 +11,7 @@ import { Page } from '@/components/page';
 import { AppText } from '@/components/text';
 import { TopBar } from '@/components/top-bar';
 import { findAllergyMatches, PRODUCT_VARIES_NOTE, type AllergyMatch } from '@/data/allergy';
+import { getTool } from '@/data/catalog';
 import { type AdaptedIngredient } from '@/data/recipe';
 import { useAppState } from '@/state/app-state';
 import { colors, fonts } from '@/theme/tokens';
@@ -23,7 +24,13 @@ function badgesFor(row: AdaptedIngredient, hasAllergy: boolean): { label: string
   // Seasoning is never rounded up: the user tastes and adds.
   if (row.tasteAdjust) badges.push({ label: '맛보고 추가', tone: 'caution' });
   if (row.quantityStatus === 'NEEDS_CHECK') badges.push({ label: '확인 필요', tone: 'caution' });
-  else if (row.quantityStatus === 'CONVERTED_APPROX') badges.push({ label: '대략적인 기준', tone: 'info' });
+  else if (row.quantityStatus === 'CONVERTED_APPROX') {
+    badges.push(
+      row.userMeasured
+        ? { label: '내가 잰 용량 기준', tone: 'calibrated' }
+        : { label: '대략적인 기준', tone: 'info' },
+    );
+  }
   return badges;
 }
 
@@ -105,6 +112,12 @@ export default function SummaryScreen() {
         titleStyle={styles.title}
       />
       {matches.length > 0 ? <AllergySummary matches={matches} /> : null}
+      {adaptation.ignoredCustomToolIds.length > 0 ? (
+        <AppText style={styles.ignoredVolumes}>
+          {adaptation.ignoredCustomToolIds.map((id) => getTool(id)?.name ?? id).join(', ')}: 맞춘 용량을 쓸 수 없어 대표
+          용량으로 안내했어요.
+        </AppText>
+      ) : null}
       {adaptation.changes.length > 0 ? (
         <View style={styles.changes}>
           <AppText weight="bold" style={styles.sectionTitle}>
@@ -147,6 +160,15 @@ export default function SummaryScreen() {
 }
 
 const styles = StyleSheet.create({
+  ignoredVolumes: {
+    marginBottom: 18,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: colors.cautionSoft,
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#986500',
+  },
   header: { marginBottom: 25 },
   title: { fontFamily: fonts.extraBold, fontSize: 34, lineHeight: 42 },
   allergy: { marginBottom: 14, padding: 16, borderRadius: 18, backgroundColor: colors.dangerSoft },

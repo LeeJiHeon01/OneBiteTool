@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -18,6 +18,7 @@ import {
   type Tool,
 } from '@/data/catalog';
 import { toolImage } from '@/data/images';
+import { findVolume, isCalibratable } from '@/data/tool-volume';
 import { useAppState } from '@/state/app-state';
 import { colors } from '@/theme/tokens';
 
@@ -134,6 +135,49 @@ function MoreTools({ tools }: { tools: Tool[] }) {
   );
 }
 
+// Selected cups and bowls can be matched to the user's own: the listed volumes are only typical ones.
+function ToolVolumes() {
+  const { toolIds, customToolVolumes } = useAppState();
+  const tools = TOOL_GROUPS.flatMap((group) => group.tools).filter(
+    (tool) => isCalibratable(tool.id) && toolIds.includes(tool.id),
+  );
+  if (tools.length === 0) return null;
+  return (
+    <View style={styles.volumes}>
+      <AppText weight="bold" style={styles.volumesTitle}>
+        내 컵·그릇 크기에 맞추기
+      </AppText>
+      <AppText style={styles.volumesHint}>
+        컵과 그릇은 집마다 크기가 달라요. 500mL 생수병으로 맞춰 두면 양을 더 정확하게 알려드려요.
+      </AppText>
+      {tools.map((tool) => {
+        const volume = findVolume(customToolVolumes, tool.id);
+        return (
+          <Pressable
+            accessibilityLabel={`${tool.name} 내 도구로 맞추기`}
+            accessibilityRole="button"
+            key={tool.id}
+            onPress={() => router.push(`/tool-volume?tool=${tool.id}` as Href)}
+            style={styles.volumeRow}
+          >
+            <View style={styles.volumeText}>
+              <AppText weight="semiBold" style={styles.volumeName}>
+                {tool.name}
+              </AppText>
+              <AppText style={styles.volumeValue}>
+                {volume ? `내가 잰 용량 약 ${volume.volumeMl}mL` : '대표 용량 기준'}
+              </AppText>
+            </View>
+            <AppText weight="bold" style={styles.volumeAction}>
+              {volume ? '다시 맞추기' : '내 도구로 맞추기'}
+            </AppText>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function ToolsScreen() {
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const { toolIds } = useAppState();
@@ -179,6 +223,7 @@ export default function ToolsScreen() {
               <ToolGrid tools={group.tools.slice(0, VISIBLE_TOOL_COUNT)} />
               {group.id === 'heat' && hasBothStoves ? <PreferredHeatChoice /> : null}
               {moreTools.length > 0 ? <MoreTools tools={moreTools} /> : null}
+              {group.id === 'measure' ? <ToolVolumes /> : null}
             </View>
           );
         })}
@@ -265,4 +310,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   radioSelected: { borderWidth: 5, borderColor: colors.primary },
+  volumes: { marginTop: 14, padding: 14, borderRadius: 16, backgroundColor: colors.surface },
+  volumesTitle: { fontSize: 14 },
+  volumesHint: { marginTop: 4, marginBottom: 6, fontSize: 12, lineHeight: 18, color: colors.sub },
+  volumeRow: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  volumeText: { flex: 1 },
+  volumeName: { fontSize: 14 },
+  volumeValue: { marginTop: 2, fontSize: 12, color: colors.sub },
+  volumeAction: { fontSize: 13, color: colors.primaryDark },
 });

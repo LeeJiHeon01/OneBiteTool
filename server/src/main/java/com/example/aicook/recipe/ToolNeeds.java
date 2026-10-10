@@ -61,6 +61,17 @@ public final class ToolNeeds {
         return List.copyOf(tools);
     }
 
+    /** True for actions done on a burner (달구기, 볶기, 끓이기, 굽기), as listed in action-tools.json. */
+    public static boolean isHeatingAction(String actionKey) {
+        return actionKey != null && ACTION_RULES.stream()
+                .anyMatch(rule -> rule.needsStove() && rule.actionKeys().contains(actionKey));
+    }
+
+    /** True when one of the tools is a heating appliance (microwave, air fryer, oven, rice cooker). */
+    public static boolean usesAppliance(List<String> toolIds, ReferenceData reference) {
+        return categoriesOf(toolIds, reference).contains(APPLIANCE_CATEGORY);
+    }
+
     public static List<Need> of(Recipe recipe, ReferenceData reference) {
         // tool id -> first step that uses it
         Map<String, Integer> firstUse = new LinkedHashMap<>();

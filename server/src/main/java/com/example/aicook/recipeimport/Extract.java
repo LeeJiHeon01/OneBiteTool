@@ -17,8 +17,14 @@ final class Extract {
     }
 
     /** evidence fields quote the page; they are compared with the page text and then dropped. */
+    /** sourceStepCount is how many steps the page itself has; null when it cannot be counted. */
     record Page(boolean isRecipe, String name, Double servings, String servingsEvidence, Integer totalMinutes,
-                List<Ingredient> ingredients, List<Step> steps) {
+                Integer sourceStepCount, List<Ingredient> ingredients, List<Step> steps) {
+
+        Page(boolean isRecipe, String name, Double servings, String servingsEvidence, Integer totalMinutes,
+             List<Ingredient> ingredients, List<Step> steps) {
+            this(isRecipe, name, servings, servingsEvidence, totalMinutes, null, ingredients, steps);
+        }
     }
 
     record Ingredient(String name, String amountText, String section, String evidence) {
