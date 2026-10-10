@@ -218,13 +218,34 @@ function useRecipeSession(profile: ReturnType<typeof useProfile>) {
   const [cookStepIndex, setCookStepIndex] = useState(0);
 
   // Opening a recipe starts a new session: nothing chosen for another recipe carries over.
-  const openRecipe = useCallback(async (id: string) => {
-    const loaded = await fetchRecipe(id);
-    setRecipe(loaded);
-    setMissingIds([]);
-    setSubstituteAnswers([]);
-    setAdaptation(null);
-  }, []);
+  const openRecipe = useCallback(
+    async (id: string) => {
+      const loaded = await fetchRecipe(id, toolIds);
+      setRecipe(loaded);
+      setMissingIds([]);
+      setSubstituteAnswers([]);
+      setAdaptation(null);
+    },
+    [toolIds],
+  );
+
+  // "Can I make this with my tools?" is asked again when the user changes their tools while a
+  // recipe is open; the rest of the session (missing ingredients, answers) is kept.
+  const recipeId = recipe?.id;
+  useEffect(() => {
+    if (!recipeId) return;
+    let cancelled = false;
+    fetchRecipe(recipeId, toolIds)
+      .then((loaded) => {
+        if (cancelled) return;
+        setRecipe((current) => (current?.id === recipeId ? { ...current, toolFit: loaded.toolFit } : current));
+      })
+      // The earlier answer stays on screen; the adaptation checks the tools again anyway.
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [recipeId, toolIds]);
 
   // Toggling an ingredient drops its earlier substitute answer so it is asked again.
   const toggleMissing = useCallback((id: string) => {

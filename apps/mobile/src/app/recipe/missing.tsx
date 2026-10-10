@@ -8,10 +8,12 @@ import { Button } from '@/components/button';
 import { Checkbox } from '@/components/checkbox';
 import { PageHeader } from '@/components/headers';
 import { Page } from '@/components/page';
+import { ShoppingListSheet } from '@/components/shopping-list-sheet';
 import { AppText } from '@/components/text';
 import { TopBar } from '@/components/top-bar';
 import { findAllergyMatches } from '@/data/allergy';
 import { type Adaptation } from '@/data/recipe';
+import { shoppingItems } from '@/data/shopping-list';
 import { useAppState } from '@/state/app-state';
 import { colors } from '@/theme/tokens';
 
@@ -19,6 +21,7 @@ export default function MissingIngredientsScreen() {
   const { allergenCodes, recipe, missingIds, toggleMissing, adaptation, answerSubstitute } = useAppState();
   // The answer the user closed the question for, so the sheet does not reopen by itself.
   const [dismissed, setDismissed] = useState<Adaptation | null>(null);
+  const [shoppingList, setShoppingList] = useState(false);
   if (!recipe) return <Redirect href="/home" />;
 
   const allergyIds = findAllergyMatches(recipe.ingredients, allergenCodes).map((match) => match.ingredientId);
@@ -39,7 +42,16 @@ export default function MissingIngredientsScreen() {
   };
 
   return (
-    <Page footer={<Button label="맞춤 레시피 만들기" onPress={makeRecipe} />}>
+    <Page
+      footer={
+        <>
+          <Button label="맞춤 레시피 만들기" onPress={makeRecipe} />
+          {missingIds.length > 0 ? (
+            <Button label="장보기 목록 만들기" onPress={() => setShoppingList(true)} variant="text" />
+          ) : null}
+        </>
+      }
+    >
       <TopBar onBack={() => router.back()} />
       <PageHeader
         description="있는 재료는 그대로 두면 돼요."
@@ -81,6 +93,12 @@ export default function MissingIngredientsScreen() {
         <Button label="있어요" onPress={() => answer(true)} />
         <Button label="없어요" onPress={() => answer(false)} variant="secondary" />
       </BottomSheet>
+      <ShoppingListSheet
+        items={shoppingItems(recipe.ingredients, missingIds)}
+        onClose={() => setShoppingList(false)}
+        recipeName={recipe.name}
+        visible={shoppingList}
+      />
     </Page>
   );
 }

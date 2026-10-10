@@ -42,6 +42,7 @@ function searchResult(allergenCodes: string[], allergyCheckNeeded: boolean): Sea
     sourceDomain: null,
     allergenCodes,
     allergyCheckNeeded,
+    toolFit: null,
   };
 }
 

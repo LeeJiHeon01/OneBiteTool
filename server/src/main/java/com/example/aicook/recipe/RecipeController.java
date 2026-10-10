@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 // Allergy data is never accepted here: query strings end up in access logs.
+// Tool codes are not sensitive and may be sent as "tools=pot,knife" to get toolFit back.
 @RestController
 @RequestMapping("/api/recipes")
 public class RecipeController {
@@ -22,17 +23,19 @@ public class RecipeController {
     }
 
     @GetMapping
-    public List<SearchResult> search(@RequestParam("q") String query) {
-        return recipeService.search(query);
+    public List<SearchResult> search(@RequestParam("q") String query,
+                                     @RequestParam(name = "tools", required = false) List<String> tools) {
+        return recipeService.search(query, tools);
     }
 
     @GetMapping("/suggestions")
-    public List<SearchResult> suggestions() {
-        return recipeService.suggestions();
+    public List<SearchResult> suggestions(@RequestParam(name = "tools", required = false) List<String> tools) {
+        return recipeService.suggestions(tools);
     }
 
     @GetMapping("/{id}")
-    public Detail detail(@PathVariable("id") String id) {
-        return recipeService.detail(id);
+    public Detail detail(@PathVariable("id") String id,
+                         @RequestParam(name = "tools", required = false) List<String> tools) {
+        return recipeService.detail(id, tools);
     }
 }

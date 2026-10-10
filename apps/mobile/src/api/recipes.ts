@@ -12,6 +12,7 @@ import {
   type RecipeBadge,
   type SearchResult,
 } from '@/data/recipe';
+import { type ToolFit } from '@/data/tool-fit';
 
 // Server responses (docs/spec.md 8.2, 8.3, 8.3.1) and their conversion to what the screens draw.
 
@@ -25,6 +26,7 @@ type SearchResultDto = {
   sourceDomain: string | null;
   allergenCodes: string[];
   allergyCheckNeeded: boolean;
+  toolFit?: ToolFit | null;
 };
 
 type DetailDto = {
@@ -38,6 +40,7 @@ type DetailDto = {
   requiredTools: { id: string; label: string; toolIds: string[] }[];
   ingredients: RecipeIngredient[];
   steps: { order: number; action: string }[];
+  toolFit?: ToolFit | null;
 };
 
 type AdaptationDto = {
@@ -145,6 +148,7 @@ function toSearchResult(dto: SearchResultDto): SearchResult {
     sourceDomain: dto.sourceDomain,
     allergenCodes: dto.allergenCodes,
     allergyCheckNeeded: dto.allergyCheckNeeded,
+    toolFit: dto.toolFit ?? null,
   };
 }
 
@@ -159,6 +163,7 @@ function toRecipe(dto: DetailDto): Recipe {
     requiredTools: dto.requiredTools,
     ingredients: dto.ingredients,
     steps: dto.steps.map((step) => ({ order: step.order, text: step.action })),
+    toolFit: dto.toolFit ?? null,
   };
 }
 
@@ -175,6 +180,7 @@ function detailToSearchResult(dto: DetailDto): SearchResult {
     sourceDomain: dto.sourceDomain,
     allergenCodes: [...new Set(codes)],
     allergyCheckNeeded: dto.ingredients.some((ingredient) => ingredient.allergyCheckNeeded),
+    toolFit: dto.toolFit ?? null,
   };
 }
 
@@ -247,8 +253,16 @@ function toAdaptation(dto: AdaptationDto, recipe: Recipe): Adaptation {
   };
 }
 
-export async function searchRecipes(query: string): Promise<SearchResult[]> {
-  const results = await get<SearchResultDto[]>(`/api/recipes?q=${encodeURIComponent(query)}`);
+// Tool codes are not sensitive, so they may travel in the URL; allergies never do.
+function toolsParam(toolIds: string[], prefix: '?' | '&'): string {
+  return toolIds.length > 0 ? `${prefix}tools=${toolIds.map(encodeURIComponent).join(',')}` : '';
+}
+
+// With the user's tools the server marks each result as makeable or not and lists makeable ones first.
+export async function searchRecipes(query: string, toolIds: string[]): Promise<SearchResult[]> {
+  const results = await get<SearchResultDto[]>(
+    `/api/recipes?q=${encodeURIComponent(query)}${toolsParam(toolIds, '&')}`,
+  );
   return results.map(toSearchResult);
 }
 
@@ -258,12 +272,12 @@ export async function fetchSuggestions(): Promise<SearchResult[]> {
   return results.map(toSearchResult);
 }
 
-export async function fetchRecipe(id: string): Promise<Recipe> {
-  return toRecipe(await get<DetailDto>(`/api/recipes/${id}`));
+export async function fetchRecipe(id: string, toolIds: string[]): Promise<Recipe> {
+  return toRecipe(await get<DetailDto>(`/api/recipes/${id}${toolsParam(toolIds, '?')}`));
 }
 
-export async function fetchSearchResult(recipeId: string): Promise<SearchResult> {
-  return detailToSearchResult(await get<DetailDto>(`/api/recipes/${recipeId}`));
+export async function fetchSearchResult(recipeId: string, toolIds: string[]): Promise<SearchResult> {
+  return detailToSearchResult(await get<DetailDto>(`/api/recipes/${recipeId}${toolsParam(toolIds, '?')}`));
 }
 
 // Tools only help pick a page the user can cook from; allergies are never sent here.
@@ -297,15 +311,18 @@ const IMPORT_POLL_MS = 2000;
 const IMPORT_MAX_POLLS = 120;
 
 // Brings a dish in from the web and waits for the result. Null means nothing passed the
-// server's check against the source page ("not found").
+// server's check against the source page ("not found"). When the app stops waiting the
+// server keeps working, and the recipe is stored for the next search.
 export async function importRecipe(
   query: string,
   toolIds: string[],
   isCancelled: () => boolean,
+  onStatus: (status: ImportJob['status']) => void = () => undefined,
 ): Promise<SearchResult | null> {
   let job = await startImport(query, toolIds);
   for (let poll = 0; poll < IMPORT_MAX_POLLS && !isCancelled(); poll++) {
-    if (job.status === 'DONE' && job.recipeId) return fetchSearchResult(job.recipeId);
+    onStatus(job.status);
+    if (job.status === 'DONE' && job.recipeId) return fetchSearchResult(job.recipeId, toolIds);
     if (job.status === 'DONE' || job.status === 'NOT_FOUND' || job.status === 'FAILED') return null;
     await new Promise((resolve) => setTimeout(resolve, IMPORT_POLL_MS));
     job = await fetchImport(job.id);

@@ -6,14 +6,19 @@ import { Button } from '@/components/button';
 import { CenterState } from '@/components/headers';
 import { Page } from '@/components/page';
 import { Picture } from '@/components/picture';
+import { ShoppingListSheet } from '@/components/shopping-list-sheet';
 import { AppText } from '@/components/text';
 import { TopBar } from '@/components/top-bar';
 import { ILLUSTRATIONS } from '@/data/images';
+import { shoppingItems } from '@/data/shopping-list';
 import { useAppState } from '@/state/app-state';
 import { colors } from '@/theme/tokens';
 
 export default function CannotCookScreen() {
-  const { adaptation, toolIds } = useAppState();
+  const { adaptation, toolIds, recipe, missingIds } = useAppState();
+  const [shoppingList, setShoppingList] = useState(false);
+  // The ingredients the user said they lack, the ones this dish cannot do without among them.
+  const toBuy = recipe ? shoppingItems(recipe.ingredients, missingIds) : [];
   const missingTool = (adaptation?.requiredItems ?? []).some((item) => item.kind === 'TOOL');
   // The tools the answer was made with. Back from the tool screen with a different set,
   // the recipe is checked again; while the user is still choosing, nothing happens.
@@ -37,6 +42,9 @@ export default function CannotCookScreen() {
             onPress={() => router.dismissTo('/search')}
             variant={missingTool ? 'secondary' : 'primary'}
           />
+          {toBuy.length > 0 ? (
+            <Button label="장보기 목록 보기" onPress={() => setShoppingList(true)} variant="secondary" />
+          ) : null}
           <Button label="없는 재료 다시 고르기" onPress={() => router.back()} variant="text" />
         </>
       }
@@ -58,6 +66,12 @@ export default function CannotCookScreen() {
           </View>
         ))}
       </View>
+      <ShoppingListSheet
+        items={toBuy}
+        onClose={() => setShoppingList(false)}
+        recipeName={recipe?.name ?? ''}
+        visible={shoppingList}
+      />
     </Page>
   );
 }

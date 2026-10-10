@@ -25,12 +25,23 @@ public final class RecipeDtos {
      */
     public record SearchResult(String id, String name, int ingredientCount, int stepCount, Integer minutes,
                                RecipeBadge recipeBadge, String sourceUrl, String sourceDomain,
-                               List<String> allergenCodes, boolean allergyCheckNeeded) {
+                               List<String> allergenCodes, boolean allergyCheckNeeded, ToolFit toolFit) {
     }
 
     public record Detail(String id, String name, RecipeBadge recipeBadge, String sourceUrl, String sourceDomain,
                          double baseServings, Integer minutes, List<ToolNeed> requiredTools,
-                         List<DetailIngredient> ingredients, List<DetailStep> steps) {
+                         List<DetailIngredient> ingredients, List<DetailStep> steps, ToolFit toolFit) {
+    }
+
+    /**
+     * Whether the recipe can be made with the tools sent in the request; null when none were sent.
+     *
+     * @param missingTools needs no owned tool covers, even through a verified substitution rule
+     */
+    public record ToolFit(boolean ok, List<MissingTool> missingTools) {
+    }
+
+    public record MissingTool(String id, String name) {
     }
 
     public record ToolNeed(String id, String label, List<String> toolIds) {

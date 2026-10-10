@@ -1,5 +1,6 @@
 import { type IconName } from '@/components/icon';
 import { type HeatLevel } from '@/data/catalog';
+import { type ToolFit } from '@/data/tool-fit';
 
 // What the recipe screens draw. The values come from the server (src/api); the app never
 // computes amounts, times, heat or safety notes itself.
@@ -24,6 +25,8 @@ export type SearchResult = {
   allergenCodes: string[];
   // An ingredient is outside the verified allergen mapping, so "no allergens" is not known.
   allergyCheckNeeded: boolean;
+  // Null when the server was not told the user's tools.
+  toolFit: ToolFit | null;
 };
 
 // AI_RESEARCHED: a conservative mapping from public sources that no person has confirmed.
@@ -54,6 +57,8 @@ export type Recipe = {
   requiredTools: { id: string; label: string; toolIds: string[] }[];
   ingredients: RecipeIngredient[];
   steps: { order: number; text: string }[];
+  // Whether the user's tools are enough; null when the server was not told the tools.
+  toolFit: ToolFit | null;
 };
 
 export type AdaptedIngredient = {

@@ -1,4 +1,4 @@
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, type Href } from 'expo-router';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import { Badge } from '@/components/badge';
@@ -11,6 +11,7 @@ import { findAllergyMatches, needsResearchNotice, RESEARCH_NOTICE } from '@/data
 import { toolImage } from '@/data/images';
 import { isFavorite } from '@/data/library';
 import { BADGE_LABELS } from '@/data/recipe';
+import { missingToolsLabel, TOOL_FIT_OK_NOTICE } from '@/data/tool-fit';
 import { useAppState } from '@/state/app-state';
 import { colors, fonts } from '@/theme/tokens';
 
@@ -64,6 +65,30 @@ export default function RecipeScreen() {
 
       {recipe.requiredTools.length > 0 ? (
         <View style={styles.section}>
+          {/* Decided by the server with the tool substitution rules; shown before the user commits. */}
+          {recipe.toolFit?.ok ? (
+            <View style={[styles.toolFit, styles.toolFitOk]}>
+              <AppText weight="bold" style={styles.toolFitOkLabel}>
+                {TOOL_FIT_OK_NOTICE}
+              </AppText>
+            </View>
+          ) : null}
+          {recipe.toolFit && !recipe.toolFit.ok ? (
+            <View style={[styles.toolFit, styles.toolFitMissing]}>
+              <AppText weight="bold" style={styles.toolFitMissingLabel}>
+                {missingToolsLabel(recipe.toolFit)}
+              </AppText>
+              <Pressable
+                accessibilityRole="button"
+                hitSlop={10}
+                onPress={() => router.push({ pathname: '/onboarding/tools', params: { edit: '1' } } as Href)}
+              >
+                <AppText weight="bold" style={styles.toolFitAction}>
+                  가진 도구 다시 고르기
+                </AppText>
+              </Pressable>
+            </View>
+          ) : null}
           <AppText weight="bold" style={styles.sectionTitle}>
             필요한 도구
           </AppText>
@@ -144,6 +169,12 @@ const styles = StyleSheet.create({
   },
   productVaries: { fontSize: 11, color: colors.sub },
   section: { paddingVertical: 30, borderBottomWidth: 1, borderBottomColor: colors.line },
+  toolFit: { marginBottom: 20, padding: 14, borderRadius: 14, gap: 8 },
+  toolFitOk: { backgroundColor: colors.successSoft },
+  toolFitOkLabel: { fontSize: 14, color: colors.success },
+  toolFitMissing: { backgroundColor: colors.cautionSoft },
+  toolFitMissingLabel: { fontSize: 14, lineHeight: 20, color: '#986500' },
+  toolFitAction: { fontSize: 13, color: colors.text, textDecorationLine: 'underline' },
   lastSection: { borderBottomWidth: 0, paddingBottom: 0 },
   sectionHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { marginBottom: 17, fontSize: 19, letterSpacing: -0.3 },

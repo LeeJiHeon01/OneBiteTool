@@ -1,9 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { errorMessage } from '@/api/client';
-import { importRecipe, searchRecipes } from '@/api/recipes';
+import { importRecipe, searchRecipes, type ImportJob } from '@/api/recipes';
 import { Badge } from '@/components/badge';
 import { Button } from '@/components/button';
 import { CenterState } from '@/components/headers';
@@ -15,11 +15,53 @@ import { TopBar } from '@/components/top-bar';
 import { hiddenSummary, splitByVisibility } from '@/data/allergy-visibility';
 import { ILLUSTRATIONS } from '@/data/images';
 import { type RecipeBadge, type SearchResult } from '@/data/recipe';
+import { missingToolsLabel, TOOL_FIT_OK_BADGE } from '@/data/tool-fit';
 import { useAppState } from '@/state/app-state';
 import { colors, fonts } from '@/theme/tokens';
 
-// searching: stored recipes; importing: the server is bringing the dish in from the web.
-type Phase = 'searching' | 'importing' | 'results' | 'noResults' | 'error';
+// searching: stored recipes; importing: the server is bringing the dish in from the web;
+// stopped: the user stopped waiting for an import that the server is still working on.
+type Phase = 'searching' | 'importing' | 'stopped' | 'results' | 'noResults' | 'error';
+
+// What the server is doing during an import, in order (job status of the same name).
+const IMPORT_STAGES: { status: ImportJob['status']; label: string }[] = [
+  { status: 'SEARCHING', label: '레시피 찾는 중' },
+  { status: 'EXTRACTING', label: '페이지 읽는 중' },
+  { status: 'VERIFYING', label: '원문과 맞춰보는 중' },
+];
+
+// The server tries several pages, so the status can go back to an earlier stage.
+function ImportStages({ status }: { status: ImportJob['status'] }) {
+  const current = Math.max(
+    0,
+    IMPORT_STAGES.findIndex((stage) => stage.status === status),
+  );
+  return (
+    <View style={styles.stages}>
+      {IMPORT_STAGES.map((stage, index) => {
+        const state = index < current ? 'done' : index === current ? 'now' : 'next';
+        return (
+          <View
+            accessibilityLabel={`${stage.label}${state === 'done' ? ' 완료' : state === 'now' ? ' 진행 중' : ''}`}
+            accessible
+            key={stage.status}
+            style={styles.stage}
+          >
+            <View style={[styles.stageMark, state === 'done' && styles.stageDone, state === 'now' && styles.stageNow]}>
+              {state === 'done' ? <Icon name="check" size={13} color={colors.white} /> : null}
+            </View>
+            <AppText
+              weight={state === 'now' ? 'bold' : 'regular'}
+              style={[styles.stageLabel, state === 'next' && styles.stageLabelNext]}
+            >
+              {stage.label}
+            </AppText>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
 
 const BADGES: Record<RecipeBadge, string> = { VERIFIED: '확인한 레시피', IMPORTED: '확인 전 레시피', WEB_SEARCH: '웹 레시피' };
 
@@ -87,6 +129,15 @@ function ResultCard({ result, index, flagged, checkNeeded, onPress }: CardProps)
         {result.title}
       </AppText>
       <AppText style={styles.cardMeta}>{meta.join(' · ')}</AppText>
+      {result.toolFit ? (
+        <View style={styles.toolFit}>
+          {result.toolFit.ok ? (
+            <Badge label={TOOL_FIT_OK_BADGE} tone="calibrated" />
+          ) : (
+            <Badge label={missingToolsLabel(result.toolFit)} tone="caution" />
+          )}
+        </View>
+      ) : null}
       <View style={styles.source}>
         <AppText style={styles.sourceLabel}>{result.sourceDomain ?? ''}</AppText>
         <Icon name="chevron" size={16} color={colors.hint} />
@@ -105,26 +156,34 @@ export default function SearchScreen() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [message, setMessage] = useState('');
   const [showHidden, setShowHidden] = useState(false);
+  const [importStatus, setImportStatus] = useState<ImportJob['status']>('PENDING');
+  // Set when the user stops waiting: the app stops asking, the server keeps working.
+  const stopped = useRef(false);
 
   // Stored recipes first; only a dish that is not stored is looked up on the web.
   useEffect(() => {
     let cancelled = false;
+    stopped.current = false;
+    const gaveUp = () => cancelled || stopped.current;
     const run = async () => {
       try {
-        const found = await searchRecipes(query);
-        if (cancelled) return;
+        const found = await searchRecipes(query, toolIds);
+        if (gaveUp()) return;
         if (found.length > 0) {
           setResults(found);
           setPhase('results');
           return;
         }
+        setImportStatus('PENDING');
         setPhase('importing');
-        const imported = await importRecipe(query, toolIds, () => cancelled);
-        if (cancelled) return;
+        const imported = await importRecipe(query, toolIds, gaveUp, (status) => {
+          if (!gaveUp()) setImportStatus(status);
+        });
+        if (gaveUp()) return;
         setResults(imported ? [imported] : []);
         setPhase(imported ? 'results' : 'noResults');
       } catch (error) {
-        if (cancelled) return;
+        if (gaveUp()) return;
         setMessage(errorMessage(error));
         setPhase('error');
       }
@@ -138,6 +197,11 @@ export default function SearchScreen() {
   const retry = () => {
     setPhase('searching');
     setAttempt((current) => current + 1);
+  };
+
+  const stopWaiting = () => {
+    stopped.current = true;
+    setPhase('stopped');
   };
 
   const searchAgain = () => {
@@ -162,22 +226,44 @@ export default function SearchScreen() {
   if (phase === 'searching' || phase === 'importing') {
     const importing = phase === 'importing';
     return (
-      <Page>
+      <Page footer={importing ? <Button label="그만 기다리기" onPress={stopWaiting} variant="secondary" /> : undefined}>
         <TopBar onBack={() => router.back()} />
         <View style={styles.searchBox}>
           <Icon name="search" size={21} color={colors.sub} />
           <AppText style={styles.queryText}>{query}</AppText>
         </View>
         <CenterState
-          description={importing ? '실제 레시피 페이지를 살펴보고 있어요.\n1분 정도 걸릴 수 있어요.' : '잠시만 기다려 주세요.'}
-          style={styles.searchingState}
+          description={importing ? '1~2분 걸려요.\n그만 기다려도 서버는 계속 찾아요.' : '잠시만 기다려 주세요.'}
+          style={importing ? styles.importingState : styles.searchingState}
           title={importing ? '웹에서 레시피를\n찾고 있어요' : '레시피를\n찾고 있어요'}
           visual={
             <>
-              <Picture size={150} source={ILLUSTRATIONS.searching} />
+              <Picture size={importing ? 110 : 150} source={ILLUSTRATIONS.searching} />
               <LoadingDots />
             </>
           }
+        />
+        {importing ? <ImportStages status={importStatus} /> : null}
+      </Page>
+    );
+  }
+
+  if (phase === 'stopped') {
+    return (
+      <Page
+        footer={
+          <>
+            <Button label="다른 요리 찾기" onPress={() => router.back()} />
+            <Button label="다시 확인해 보기" onPress={retry} variant="text" />
+          </>
+        }
+      >
+        <TopBar onBack={() => router.back()} />
+        <CenterState
+          description={'다 찾으면 다음에 검색할 때 바로 나와요.'}
+          style={styles.emptyState}
+          title={'서버가 계속\n찾고 있어요'}
+          visual={<Picture size={150} source={ILLUSTRATIONS.searching} style={styles.emptyVisual} />}
         />
       </Page>
     );
@@ -290,6 +376,23 @@ const styles = StyleSheet.create({
   queryText: { fontSize: 16 },
   input: { flex: 1, minWidth: 0, height: '100%', fontFamily: fonts.regular, fontSize: 16, color: colors.text },
   searchingState: { paddingTop: 80 },
+  importingState: { paddingTop: 36 },
+  stages: { alignSelf: 'center', marginTop: 26, gap: 14 },
+  stage: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  stageMark: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: colors.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stageDone: { borderColor: colors.success, backgroundColor: colors.success },
+  stageNow: { borderWidth: 6, borderColor: colors.primary },
+  stageLabel: { fontSize: 15 },
+  stageLabelNext: { color: colors.hint },
+  toolFit: { marginTop: -7, marginBottom: 15, flexDirection: 'row' },
   loader: { height: 56, marginBottom: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   dot: { width: 13, height: 13, borderRadius: 7, backgroundColor: colors.primary },
   emptyState: { paddingTop: 100 },

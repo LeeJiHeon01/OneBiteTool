@@ -108,6 +108,19 @@ public final class ToolNeeds {
         return needs;
     }
 
+    /**
+     * Needs the user's tools do not cover, not even through a verified substitution rule
+     * (scissors for a knife). The same decision the adaptation makes for its required tools.
+     */
+    public static List<Need> missing(Recipe recipe, ReferenceData reference, Set<String> ownedToolIds) {
+        return of(recipe, reference).stream()
+                .filter(need -> need.anyOf().stream().noneMatch(ownedToolIds::contains))
+                .filter(need -> need.anyOf().stream()
+                        .flatMap(toolId -> reference.toolRulesFor(recipe.id(), toolId).stream())
+                        .noneMatch(rule -> ownedToolIds.contains(rule.substituteToolId())))
+                .toList();
+    }
+
     private static List<ActionRule> rulesFor(Recipe.Step step) {
         if (step.actionKey() == null) {
             return List.of();

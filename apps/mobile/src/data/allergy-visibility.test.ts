@@ -16,6 +16,7 @@ function recipe(id: string, allergenCodes: string[], allergyCheckNeeded: boolean
     sourceDomain: null,
     allergenCodes,
     allergyCheckNeeded,
+    toolFit: null,
   };
 }
 
