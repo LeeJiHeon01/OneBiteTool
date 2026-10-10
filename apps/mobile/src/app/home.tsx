@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { fetchSuggestions } from '@/api/recipes';
+import { BottomSheet } from '@/components/bottom-sheet';
+import { Button } from '@/components/button';
 import { Eyebrow } from '@/components/headers';
 import { Icon } from '@/components/icon';
 import { Page } from '@/components/page';
@@ -31,7 +33,17 @@ export default function HomeScreen() {
     cookRecords,
     allergenCodes,
     openRecipe,
+    savedCooking,
+    resumeCooking,
+    discardSavedCooking,
   } = useAppState();
+  // Closing the question without answering keeps the dish for the next time the app opens.
+  const [resumeAsked, setResumeAsked] = useState(false);
+
+  const resume = (fromStart: boolean) => {
+    resumeCooking(fromStart);
+    router.push('/cook');
+  };
   const [query, setQuery] = useState('');
   // Recipes the server already has: they open at once. A new dish goes through search instead.
   const [stored, setStored] = useState<SearchResult[]>([]);
@@ -234,6 +246,21 @@ export default function HomeScreen() {
         </View>
       </View>
       ) : null}
+      <BottomSheet
+        description={
+          savedCooking
+            ? `${savedCooking.recipe.name} · ${savedCooking.adaptation.steps.length}단계 중 ${savedCooking.stepIndex + 1}단계까지 했어요.`
+            : undefined
+        }
+        icon="clock"
+        onClose={() => setResumeAsked(true)}
+        title="하던 요리 이어서 할까요?"
+        visible={savedCooking !== null && !resumeAsked}
+      >
+        <Button label="이어하기" onPress={() => resume(false)} />
+        <Button label="처음부터" onPress={() => resume(true)} variant="secondary" />
+        <Button label="그만할게요" onPress={discardSavedCooking} variant="text" />
+      </BottomSheet>
     </Page>
   );
 }

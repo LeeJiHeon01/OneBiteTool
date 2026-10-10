@@ -14,7 +14,7 @@ import { useAppState } from '@/state/app-state';
 import { colors, fonts } from '@/theme/tokens';
 
 export default function CompleteScreen() {
-  const { adaptation, recipe, addCookRecord, rateCookRecord } = useAppState();
+  const { adaptation, recipe, addCookRecord, rateCookRecord, finishCooking } = useAppState();
   const [rating, setRating] = useState<Rating | null>(null);
   const [stuckSteps, setStuckSteps] = useState<number[]>([]);
   // The finished dish is recorded once when this screen opens; the answers below are optional
@@ -25,6 +25,11 @@ export default function CompleteScreen() {
     if (!recipe || recordId.current) return;
     recordId.current = addCookRecord({ id: recipe.id, name: recipe.name });
   }, [recipe, addCookRecord]);
+
+  // The dish is done: nothing is left to pick up later.
+  useEffect(() => {
+    finishCooking();
+  }, [finishCooking]);
 
   const pickRating = (next: Rating) => {
     const value = rating === next ? null : next;

@@ -75,8 +75,9 @@ export type AdaptedIngredient = {
   userMeasured: boolean;
   // An ingredient whose proportion matters was left as written: the user should measure it with a cup.
   measureExactly: boolean;
-  // Only the allergens the user asked to avoid.
+  // Every allergen the ingredient contains. Screens show only the ones the user avoids.
   allergens: AllergenRef[];
+  // The allergen mapping of this ingredient is not reviewed. Shown to users with allergies only.
   allergyCheckNeeded: boolean;
   // The ingredient's allergens differ by product; shown to users with allergies only.
   allergenProductVaries: boolean;

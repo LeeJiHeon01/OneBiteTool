@@ -103,10 +103,19 @@ class StepRewriter {
                 (step, partActionKey, partIngredientIds, anchor, partActionKeys) -> step.safetyNotes());
     }
 
+    /** complete: the AI answered and every step passed validation, so the result is worth keeping. */
+    record Rewritten(List<AdaptedStep> steps, boolean complete) {
+    }
+
     List<AdaptedStep> rewrite(SkillLevel skillLevel, List<AdaptedStep> steps, List<AdaptedIngredient> ingredients,
                               List<Change> changes, PartNotes partNotes) {
+        return rewriteAll(skillLevel, steps, ingredients, changes, partNotes).steps();
+    }
+
+    Rewritten rewriteAll(SkillLevel skillLevel, List<AdaptedStep> steps, List<AdaptedIngredient> ingredients,
+                         List<Change> changes, PartNotes partNotes) {
         if (steps.isEmpty() || !client.isAvailable()) {
-            return steps;
+            return new Rewritten(steps, false);
         }
         Map<String, AdaptedIngredient> ingredientsById = ingredients.stream()
                 .collect(Collectors.toMap(AdaptedIngredient::ingredientId, Function.identity()));
@@ -126,15 +135,16 @@ class StepRewriter {
                         .map(rewrite -> applied(step, rewrite.parts(), ingredientsById, partNotes))
                         .orElse(List.of(step)).stream())
                 .toList();
+        boolean complete = accepted.size() == steps.size();
         if (result.size() == steps.size()) {
-            return result;
+            return new Rewritten(result, complete);
         }
         // A split step adds steps, so every step is numbered again.
         List<AdaptedStep> numbered = new ArrayList<>();
         for (AdaptedStep step : result) {
             numbered.add(step.order() == numbered.size() + 1 ? step : step.withOrder(numbered.size() + 1));
         }
-        return numbered;
+        return new Rewritten(numbered, complete);
     }
 
     /** One step per accepted part; with a single part only the wording changes. */

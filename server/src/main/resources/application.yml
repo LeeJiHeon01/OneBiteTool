@@ -35,4 +35,7 @@ app:
   preferred-recipe-sites: ${PREFERRED_RECIPE_SITES:10000recipe.com}
   # Opens /api/maintenance (re-extracting stored recipes). Development only; off unless set.
   maintenance-enabled: ${APP_MAINTENANCE_ENABLED:false}
+  # Makes the adaptations of the fixture recipes at start-up for a demonstration (three AI calls
+  # per fixture the first time). Development only; off unless set.
+  adaptation-warmup-enabled: ${APP_ADAPTATION_WARMUP_ENABLED:false}
 

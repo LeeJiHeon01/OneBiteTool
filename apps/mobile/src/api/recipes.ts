@@ -1,4 +1,4 @@
-import { get, post } from '@/api/client';
+import { ApiError, get, post } from '@/api/client';
 import { type IconName } from '@/components/icon';
 import { type HeatLevel, type HeatSource, type SkillLevel } from '@/data/catalog';
 import {
@@ -66,6 +66,9 @@ type AdaptationDto = {
     quantityStatus: QuantityStatus;
     sensitivity?: 'HIGH' | 'RATIO' | 'NORMAL';
     allergenProductVaries: boolean;
+    // What the ingredient contains, whoever the user is; compared with the device's allergies on screen.
+    allergens?: { code: string; hidden: boolean }[];
+    allergenReviewed?: boolean;
   }[];
   steps: {
     stepId: string;
@@ -207,15 +210,29 @@ function toIngredient(dto: AdaptationDto, row: AdaptationDto['ingredients'][numb
     userMeasured: row.display.userMeasured === true,
     // The proportion matters (rice water, batter) and the amount could not be converted closely enough.
     measureExactly: row.sensitivity === 'RATIO' && row.quantityStatus === 'NEEDS_CHECK',
-    allergens: dto.allergyWarnings
-      .filter((warning) => warning.ingredientId === row.ingredientId)
-      .map((warning) => ({ code: warning.allergenCode, hidden: warning.hidden })),
-    allergyCheckNeeded: dto.allergyCheckNeededIngredientIds.includes(row.ingredientId),
+    // Every allergen of the ingredient is kept, not only the user's: the screens compare them with
+    // the allergies on the device, so nothing about the user travels with a saved recipe.
+    allergens:
+      row.allergens ??
+      dto.allergyWarnings
+        .filter((warning) => warning.ingredientId === row.ingredientId)
+        .map((warning) => ({ code: warning.allergenCode, hidden: warning.hidden })),
+    allergyCheckNeeded:
+      row.allergenReviewed === undefined
+        ? dto.allergyCheckNeededIngredientIds.includes(row.ingredientId)
+        : !row.allergenReviewed,
     allergenProductVaries: row.allergenProductVaries,
   };
 }
 
+const HEAT_LEVELS = ['OFF', 'LOW', 'MEDIUM_LOW', 'MEDIUM', 'MEDIUM_HIGH', 'HIGH'];
+
 function toStep(step: AdaptationDto['steps'][number]): AdaptedStep {
+  // A heat level the app has no picture and label for is an error, never a placeholder:
+  // the picture and the words must always show the same level.
+  if (step.heatLevel !== null && !HEAT_LEVELS.includes(step.heatLevel)) {
+    throw new ApiError('INVALID_RESPONSE', 0, '레시피를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+  }
   const action = (step.actionKey && ACTIONS[step.actionKey]) || OTHER_ACTION;
   return {
     id: step.stepId,

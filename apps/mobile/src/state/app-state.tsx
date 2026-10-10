@@ -3,6 +3,14 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { adaptRecipe, fetchRecipe, type SubstituteAnswer } from '@/api/recipes';
 import { resolveHeatSource, type HeatSource, type SkillLevel } from '@/data/catalog';
 import {
+  fromTheStart,
+  isFresh,
+  sanitizeSaved,
+  timerAt,
+  toggleChecked,
+  type SavedCooking,
+} from '@/data/cooking-session';
+import {
   addRecord,
   newRecord,
   removeRecord,
@@ -25,7 +33,7 @@ import {
   withVolume,
   type CustomToolVolume,
 } from '@/data/tool-volume';
-import { loadJson, saveJson } from '@/state/device-store';
+import { loadJson, removeJson, saveJson } from '@/state/device-store';
 import { loadProfile, saveProfile } from '@/state/profile-storage';
 import { setTimerNotificationsEnabled } from '@/state/timer-notifications';
 import { useTimer } from '@/state/use-timer';
@@ -37,6 +45,7 @@ const RECENT_QUERIES_KEY = 'recent-queries.v1';
 const FAVORITES_KEY = 'favorites.v1';
 const COOK_HISTORY_KEY = 'cook-history.v1';
 const SETTINGS_KEY = 'settings.v1';
+const COOKING_KEY = 'cooking-session.v1';
 
 function toggleIn(list: string[], value: string): string[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
@@ -242,6 +251,10 @@ function useRecipeSession(profile: ReturnType<typeof useProfile>) {
   const [substituteAnswers, setSubstituteAnswers] = useState<SubstituteAnswer[]>([]);
   const [adaptation, setAdaptation] = useState<Adaptation | null>(null);
   const [cookStepIndex, setCookStepIndex] = useState(0);
+  // Ticked checklist items by step; a reminder for the user only, never a condition to move on.
+  const [checkedItems, setCheckedItems] = useState<Record<string, string[]>>({});
+  // True from the moment the cooking screen opens until the dish is finished.
+  const [cooking, setCooking] = useState(false);
 
   // Opening a recipe starts a new session: nothing chosen for another recipe carries over.
   const openRecipe = useCallback(
@@ -306,12 +319,30 @@ function useRecipeSession(profile: ReturnType<typeof useProfile>) {
     return result;
   }, [recipe, missingIds, substituteAnswers, skillLevel, toolIds, customToolVolumes, heatSource, allergenCodes]);
 
+  const toggleCheckedItem = useCallback(
+    (stepId: string, itemId: string) => setCheckedItems((current) => toggleChecked(current, stepId, itemId)),
+    [],
+  );
+  const clearCheckedItems = useCallback(() => setCheckedItems({}), []);
+
+  // Puts back a dish that was being cooked when the app was closed.
+  const restoreSession = useCallback((saved: SavedCooking) => {
+    setRecipe(saved.recipe);
+    setMissingIds([]);
+    setSubstituteAnswers([]);
+    setAdaptation(saved.adaptation);
+    setCookStepIndex(saved.stepIndex);
+    setCheckedItems(saved.checkedItems);
+  }, []);
+
   const clearSession = useCallback(() => {
     setRecipe(null);
     setMissingIds([]);
     setSubstituteAnswers([]);
     setAdaptation(null);
     setCookStepIndex(0);
+    setCheckedItems({});
+    setCooking(false);
   }, []);
 
   return {
@@ -324,6 +355,12 @@ function useRecipeSession(profile: ReturnType<typeof useProfile>) {
     requestAdaptation,
     cookStepIndex,
     setCookStepIndex,
+    checkedItems,
+    toggleCheckedItem,
+    clearCheckedItems,
+    cooking,
+    setCooking,
+    restoreSession,
     clearSession,
   };
 }
@@ -337,14 +374,76 @@ function useAppStateValue() {
   const { clearProfile } = profile;
   const { clearLibrary } = library;
   const { clearSettings } = settings;
-  const { clearSession, setCookStepIndex } = session;
-  const { cancel } = timer;
+  const { clearSession, setCookStepIndex, clearCheckedItems, restoreSession, setCooking } = session;
+  const { recipe, adaptation, cookStepIndex, checkedItems, cooking } = session;
+  const { cancel, restore: restoreTimer } = timer;
+  const activeTimer = timer.timer;
+
+  // A dish that was being cooked when the app was closed, waiting for the user's answer.
+  const [savedCooking, setSavedCooking] = useState<SavedCooking | null>(null);
+  const [cookingLoaded, setCookingLoaded] = useState(false);
+
+  useEffect(() => {
+    loadJson<unknown>(COOKING_KEY, null).then((stored) => {
+      const saved = sanitizeSaved(stored);
+      // Older than a day: dropped without asking.
+      if (saved && isFresh(saved, Date.now())) setSavedCooking(saved);
+      else if (stored !== null) removeJson(COOKING_KEY);
+      setCookingLoaded(true);
+    });
+  }, []);
+
+  // While a dish is being cooked, every change is written down: the step, the timer's end time
+  // and the ticked items. Which allergies the user has is not part of it.
+  useEffect(() => {
+    if (!cookingLoaded || !cooking || !recipe || !adaptation) return;
+    saveJson(COOKING_KEY, {
+      savedAt: Date.now(),
+      recipe,
+      adaptation,
+      stepIndex: cookStepIndex,
+      timer: activeTimer,
+      checkedItems,
+    } satisfies SavedCooking);
+  }, [cookingLoaded, cooking, recipe, adaptation, cookStepIndex, activeTimer, checkedItems]);
 
   // A new adaptation starts cooking from the first step with no timer.
   const resetCooking = useCallback(() => {
     setCookStepIndex(0);
+    clearCheckedItems();
     cancel();
-  }, [setCookStepIndex, cancel]);
+  }, [setCookStepIndex, clearCheckedItems, cancel]);
+
+  // Called when the cooking screen opens: from here on the dish is saved as it goes.
+  const startCooking = useCallback(() => {
+    setCooking(true);
+    setSavedCooking(null);
+  }, [setCooking]);
+
+  // Called when the dish is finished: there is nothing left to pick up.
+  const finishCooking = useCallback(() => {
+    setCooking(false);
+    removeJson(COOKING_KEY);
+  }, [setCooking]);
+
+  // The user's answer to "pick up where you left off?". The timer's remaining time comes from
+  // its end time; one that ran out while the app was closed is shown as finished.
+  const resumeCooking = useCallback(
+    (fromStart: boolean) => {
+      if (!savedCooking) return;
+      const saved = fromStart ? fromTheStart(savedCooking) : savedCooking;
+      restoreSession(saved);
+      restoreTimer(timerAt(saved.timer, Date.now()));
+      setCooking(true);
+      setSavedCooking(null);
+    },
+    [savedCooking, restoreSession, restoreTimer, setCooking],
+  );
+
+  const discardSavedCooking = useCallback(() => {
+    setSavedCooking(null);
+    removeJson(COOKING_KEY);
+  }, []);
 
   const clearAll = useCallback(() => {
     clearProfile();
@@ -352,9 +451,24 @@ function useAppStateValue() {
     clearLibrary();
     clearSettings();
     cancel();
+    setSavedCooking(null);
+    removeJson(COOKING_KEY);
   }, [clearProfile, clearSession, clearLibrary, clearSettings, cancel]);
 
-  return { ...profile, ...session, ...library, ...settings, timer, resetCooking, clearAll };
+  return {
+    ...profile,
+    ...session,
+    ...library,
+    ...settings,
+    timer,
+    resetCooking,
+    savedCooking,
+    startCooking,
+    finishCooking,
+    resumeCooking,
+    discardSavedCooking,
+    clearAll,
+  };
 }
 
 type AppState = ReturnType<typeof useAppStateValue>;

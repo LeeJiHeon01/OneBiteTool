@@ -25,9 +25,15 @@ import com.example.aicook.reference.Rules.Ingredient;
 import com.example.aicook.reference.Rules.WeightReference;
 import com.example.aicook.reference.Sensitivity;
 import com.example.aicook.reference.Tools.Variant;
+import com.example.aicook.common.ApiException;
+import com.example.aicook.common.Json;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,11 +57,25 @@ public class AdaptationService {
     private final MeasureConverter measureConverter;
     private final IngredientPlanner ingredientPlanner;
     private final ToolPlanner toolPlanner;
+    private static final Logger log = LoggerFactory.getLogger(AdaptationService.class);
+
     private final StepAssembler stepAssembler;
     private final StepRewriter stepRewriter;
+    /** Null when answers are not stored (tests that build the service by hand). */
+    private final AdaptationCache cache;
+    private final CacheVersions versions;
 
     public AdaptationService(RecipeService recipeService, ReferenceData reference,
                              MeasureConverter measureConverter, StepRewriter stepRewriter) {
+        this(recipeService, reference, measureConverter, stepRewriter, null, null);
+    }
+
+    @Autowired
+    public AdaptationService(RecipeService recipeService, ReferenceData reference,
+                             MeasureConverter measureConverter, StepRewriter stepRewriter,
+                             AdaptationCache cache, CacheVersions versions) {
+        this.cache = cache;
+        this.versions = versions;
         this.stepRewriter = stepRewriter;
         this.recipeService = recipeService;
         this.reference = reference;
@@ -80,6 +100,89 @@ public class AdaptationService {
                     List.of(), List.of(), conditions.ignoredCustomTools());
         }
 
+        // Deciding what to leave out or swap is cheap and done for every request. The slow part,
+        // the AI's rewording, is looked up first: the same recipe under the same conditions and
+        // the same decisions has been answered before. Allergies are not part of the lookup.
+        Map<String, Object> cacheConditions = cache == null ? null
+                : cacheConditions(request, recipe, conditions, ingredientPlan, toolPlan);
+        String conditionsHash = cache == null ? null : AdaptationCache.hashOf(cacheConditions);
+        Optional<AdaptationCache.Entry> stored = cache == null ? Optional.empty()
+                : cache.find(recipe.id(), conditionsHash);
+        AdaptationResponse answer;
+        if (stored.isPresent()) {
+            answer = stored.get().response();
+        } else {
+            Built built = build(recipe, conditions, ingredientPlan, toolPlan, status);
+            answer = built.response();
+            // An answer the AI did not fully word is not kept, so a passing failure is not served for good.
+            if (cache != null && built.complete()) {
+                answer = answer.withId(cache.save(recipe.id(), conditionsHash, cacheConditions, answer,
+                        versions.model()));
+            }
+        }
+        // Allergy lists belong to this request only: they are never stored.
+        return answer.withAllergy(allergyWarnings(recipe, conditions, ingredientPlan),
+                allergyCheckNeeded(recipe, conditions, ingredientPlan),
+                answer.ingredients().stream()
+                        .map(ingredient -> withAllergenFacts(recipe, ingredient, ingredientPlan))
+                        .toList());
+    }
+
+    /** A stored answer by its id, without allergy lists: those are only given for a request that states the allergies. */
+    public AdaptationResponse findStored(String id) {
+        return Optional.ofNullable(cache).flatMap(storedAnswers -> storedAnswers.findById(id))
+                .map(AdaptationCache.Entry::response)
+                .orElseThrow(() -> ApiException.notFound("ADAPTATION_NOT_FOUND", "저장된 맞춤 레시피를 찾지 못했어요."));
+    }
+
+    /** complete: the AI worded every step, so the answer may be stored. */
+    private record Built(AdaptationResponse response, boolean complete) {
+    }
+
+    /**
+     * Everything that decides the answer, and nothing about allergies. Allergies can only change
+     * which substitute is offered; that shows up here as the decision made for each ingredient.
+     */
+    private Map<String, Object> cacheConditions(AdaptationRequest request, Recipe recipe, Conditions conditions,
+                                                IngredientPlanner.Plan ingredientPlan, ToolPlanner.Plan toolPlan) {
+        Map<String, Object> key = new LinkedHashMap<>();
+        key.put("logicVersion", CacheVersions.LOGIC_VERSION);
+        key.put("seedVersion", versions.seedVersion());
+        key.put("promptVersion", versions.promptVersion());
+        key.put("recipeId", recipe.id());
+        // Changes when the stored recipe changes (a fixture that was updated, a re-extracted page).
+        key.put("recipeVersion", AdaptationCache.hashOf(Map.of("recipe", Json.write(recipe))));
+        key.put("servings", request.servings());
+        key.put("skillLevel", conditions.skillLevel().name());
+        key.put("toolIds", conditions.toolIds().stream().sorted().toList());
+        key.put("heatSource", conditions.heatSource());
+        key.put("customToolVolumes", conditions.customVolumes().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> entry.getKey() + "=" + entry.getValue())
+                .toList());
+        key.put("ignoredCustomTools", conditions.ignoredCustomTools());
+        key.put("missingIngredientIds", conditions.missingIngredientIds().stream().sorted().toList());
+        key.put("ingredientDecisions", recipe.ingredients().stream()
+                .map(ingredient -> ingredient.id() + "=" + ingredientPlan.of(ingredient.id()).kind()
+                        + ":" + ingredientPlan.of(ingredient.id()).substituteCode())
+                .toList());
+        key.put("toolSubstitutions", toolPlan.substitutions().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> entry.getKey() + "=" + entry.getValue().substituteToolId())
+                .toList());
+        return key;
+    }
+
+    private AdaptedIngredient withAllergenFacts(Recipe recipe, AdaptedIngredient ingredient,
+                                                IngredientPlanner.Plan plan) {
+        String code = StepAssembler.effectiveDictionaryCode(recipe, ingredient.ingredientId(), plan);
+        return ingredient.withAllergens(reference.allergensOf(code).orElse(List.of()),
+                reference.isAllergenReviewed(code));
+    }
+
+    /** Builds the answer without any allergy list. */
+    private Built build(Recipe recipe, Conditions conditions, IngredientPlanner.Plan ingredientPlan,
+                        ToolPlanner.Plan toolPlan, Status status) {
         StepAssembler.Result steps = stepAssembler.assemble(recipe, conditions, ingredientPlan, toolPlan);
         List<Change> changes = concat(ingredientPlan.changes(), toolPlan.changes());
         List<AdaptedIngredient> ingredients = adaptIngredients(recipe, conditions, ingredientPlan);
@@ -96,14 +199,16 @@ public class AdaptationService {
                                 partActionKeys))
                         // Nothing to check the rules against: every caution of the step stays.
                         .orElse(step.safetyNotes());
-        List<AdaptedStep> splitSteps = stepRewriter.rewrite(conditions.skillLevel(), joinedSteps, ingredients,
-                changes, partNotes);
+        StepRewriter.Rewritten rewritten = stepRewriter.rewriteAll(conditions.skillLevel(), joinedSteps,
+                ingredients, changes, partNotes);
         // "넣어요" steps that now follow one another and differ only in the ingredient are joined again.
-        List<AdaptedStep> rewordedSteps = StepMerger.merge(splitSteps, ingredientNames);
-        return new AdaptationResponse(newId(), status, RecipeService.badgeOf(recipe), recipe.sourceUrl(),
-                allergyWarnings(recipe, conditions, ingredientPlan),
-                allergyCheckNeeded(recipe, conditions, ingredientPlan), List.of(), changes, List.of(),
-                steps.safetySummary(), ingredients, rewordedSteps, conditions.ignoredCustomTools());
+        List<AdaptedStep> rewordedSteps = StepMerger.merge(rewritten.steps(), ingredientNames);
+        AdaptationResponse response = new AdaptationResponse(newId(), status, RecipeService.badgeOf(recipe),
+                recipe.sourceUrl(), List.of(), List.of(), List.of(), changes, List.of(), steps.safetySummary(),
+                ingredients, rewordedSteps, conditions.ignoredCustomTools());
+        log.info("Adaptation built for recipe {} ({} steps, stored: {})", recipe.id(), rewordedSteps.size(),
+                rewritten.complete());
+        return new Built(response, rewritten.complete());
     }
 
     private Status statusOf(List<RequiredItem> requiredItems, IngredientPlanner.Plan plan) {

@@ -5,7 +5,8 @@ import { cancelTimerEnd, scheduleTimerEnd } from '@/state/timer-notifications';
 
 // Cooking timer (spec §9). Only one timer exists at a time. It never starts by itself and
 // never moves to the next step. Each change replaces or cancels the scheduled end notification.
-// The timer lives in memory: it survives the lock screen and the background, not a closed app.
+// The timer lives in memory; the dish being cooked is saved with it (data/cooking-session) and
+// puts it back through restore() when a closed app is opened again.
 export type TimerState = {
   stepId: string;
   // 1-based step number, shown in the notification.
@@ -95,7 +96,18 @@ export function useTimer() {
     setTimer(null);
   }, []);
 
-  return { timer, start, pause, resume, restart, cancel };
+  // Puts back a saved timer. A running one keeps its end time and gets its notification
+  // scheduled again (replacing whatever is scheduled); a finished or paused one schedules nothing.
+  const restore = useCallback((saved: TimerState | null) => {
+    const secondsLeft = saved?.status === 'running' && saved.endAt !== null
+      ? Math.ceil((saved.endAt - Date.now()) / 1000)
+      : 0;
+    if (saved && secondsLeft > 0) scheduleTimerEnd(secondsLeft, saved.stepNumber);
+    else cancelTimerEnd();
+    setTimer(finishIfDue(saved));
+  }, []);
+
+  return { timer, start, pause, resume, restart, cancel, restore };
 }
 
 // Ticks while the timer runs and returns the seconds left.

@@ -42,8 +42,14 @@ function ViewToggle({ fullView, onChange }: { fullView: boolean; onChange: (full
 }
 
 export default function CookScreen() {
-  const { adaptation, recipe, allergenCodes, heatSource, cookStepIndex, setCookStepIndex } = useAppState();
+  const { adaptation, recipe, allergenCodes, heatSource, cookStepIndex, setCookStepIndex, startCooking } =
+    useAppState();
   const [fullView, setFullView] = useState(false);
+
+  // From here on the dish is saved on the device as it goes, so a closed app can pick it up.
+  useEffect(() => {
+    startCooking();
+  }, [startCooking]);
 
   // The screen stays on while this screen is open (hands are busy), and only then.
   useEffect(() => {

@@ -16,11 +16,16 @@ import { type AdaptedIngredient } from '@/data/recipe';
 import { useAppState } from '@/state/app-state';
 import { colors, fonts } from '@/theme/tokens';
 
-function badgesFor(row: AdaptedIngredient, hasAllergy: boolean): { label: string; tone: BadgeTone }[] {
+function badgesFor(
+  row: AdaptedIngredient,
+  hasAllergy: boolean,
+  userHasAllergies: boolean,
+): { label: string; tone: BadgeTone }[] {
   const badges: { label: string; tone: BadgeTone }[] = [];
   if (hasAllergy) badges.push({ label: '알레르기', tone: 'danger' });
   // Not in the verified mapping: its allergens are unknown, so it is never shown as safe.
-  if (row.allergyCheckNeeded) badges.push({ label: '알레르기 확인 필요', tone: 'caution' });
+  // A user without allergies sees no allergy badge at all.
+  if (userHasAllergies && row.allergyCheckNeeded) badges.push({ label: '알레르기 확인 필요', tone: 'caution' });
   // Seasoning is never rounded up: the user tastes and adds.
   if (row.tasteAdjust) badges.push({ label: '맛보고 추가', tone: 'caution' });
   if (row.quantityStatus === 'NEEDS_CHECK') badges.push({ label: '확인 필요', tone: 'caution' });
@@ -68,11 +73,12 @@ function AllergySummary({ matches }: { matches: AllergyMatch[] }) {
 type RowProps = {
   row: AdaptedIngredient;
   hasAllergy: boolean;
+  userHasAllergies: boolean;
   // Shown to users with allergies only: the ingredient's allergens differ by product.
   showProductVaries: boolean;
 };
 
-function IngredientRow({ row, hasAllergy, showProductVaries }: RowProps) {
+function IngredientRow({ row, hasAllergy, userHasAllergies, showProductVaries }: RowProps) {
   return (
     <View style={styles.row}>
       <View style={styles.visual}>
@@ -90,7 +96,7 @@ function IngredientRow({ row, hasAllergy, showProductVaries }: RowProps) {
         ) : null}
       </View>
       <View style={styles.badges}>
-        {badgesFor(row, hasAllergy).map((badge) => (
+        {badgesFor(row, hasAllergy, userHasAllergies).map((badge) => (
           <Badge key={badge.label} label={badge.label} tone={badge.tone} />
         ))}
       </View>
@@ -151,6 +157,7 @@ export default function SummaryScreen() {
             key={row.id}
             row={row}
             showProductVaries={allergenCodes.length > 0 && row.allergenProductVaries}
+            userHasAllergies={allergenCodes.length > 0}
           />
         ))}
       </View>

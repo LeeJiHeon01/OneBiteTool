@@ -10,6 +10,7 @@ import { StepReportSheet, type ReportReason } from '@/components/step-report-she
 import { StepTimer } from '@/components/step-timer';
 import { AppText } from '@/components/text';
 import { useToast } from '@/components/toast';
+import { useAppState } from '@/state/app-state';
 import { type AdaptedStep } from '@/data/recipe';
 import { type AllergyMatch } from '@/data/allergy';
 import { type HeatSource } from '@/data/catalog';
@@ -33,10 +34,11 @@ export function CookStep({ step, heatSource, allergyMatches }: Props) {
   // The contract (spec 8, POST /api/reports) is settled but not built yet: nothing is sent for now.
   // When it is, a failed send still shows the same thanks and is not retried.
   const sendReport = (_reason: ReportReason) => showToast('알려주셔서 고마워요');
-  // Ticks are only a reminder for the user; moving on never depends on them.
-  const [checkedIds, setCheckedIds] = useState<string[]>([]);
-  const toggleItem = (id: string) =>
-    setCheckedIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+  // Ticks are only a reminder for the user; moving on never depends on them. They are kept
+  // with the dish being cooked, so they are still there after the app was closed.
+  const { checkedItems, toggleCheckedItem } = useAppState();
+  const checkedIds = checkedItems[step.id] ?? [];
+  const toggleItem = (id: string) => toggleCheckedItem(step.id, id);
 
   // Reading stops when the step leaves the screen (next, previous, list view, closing).
   useEffect(() => () => void Speech.stop(), []);

@@ -88,7 +88,7 @@ class StepAssembler {
                     step.actionKey(), null,
                     keptIngredientIds, toolIds, List.of(), step.durationSeconds(), step.timerStartCondition(),
                     step.heatLevel(), step.heatRaw(), step.deviceSettingRaw(),
-                    heatVisualKey(step, conditions.heatSource()),
+                    HeatVisuals.requireKnown(heatVisualKey(step, conditions.heatSource())),
                     step.completionCheck(), notes, List.of(), List.of(), step.durationMaxSeconds()));
         }
         return new Result(steps, List.copyOf(summary), contexts);

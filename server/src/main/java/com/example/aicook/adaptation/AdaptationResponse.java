@@ -3,6 +3,7 @@ package com.example.aicook.adaptation;
 import com.example.aicook.measure.MeasureResult.QuantityStatus;
 import com.example.aicook.recipe.Recipe.HeatLevel;
 import com.example.aicook.recipe.RecipeDtos.RecipeBadge;
+import com.example.aicook.reference.Rules.AllergenRef;
 import com.example.aicook.reference.Sensitivity;
 
 import java.util.List;
@@ -20,6 +21,24 @@ public record AdaptationResponse(String id, Status status, RecipeBadge recipeBad
                                  List<RequiredItem> requiredItems, List<String> safetySummary,
                                  List<AdaptedIngredient> ingredients, List<AdaptedStep> steps,
                                  List<String> ignoredCustomTools) {
+
+    /** The same answer under the id it is stored with. */
+    AdaptationResponse withId(String newId) {
+        return new AdaptationResponse(newId, status, recipeBadge, sourceUrl, allergyWarnings,
+                allergyCheckNeededIngredientIds, pendingQuestions, changes, requiredItems, safetySummary,
+                ingredients, steps, ignoredCustomTools);
+    }
+
+    /**
+     * The same answer with the allergy lists of one request. A stored answer has none: they
+     * depend on the user's allergies, which are never stored.
+     */
+    AdaptationResponse withAllergy(List<AllergyWarning> warnings, List<String> checkNeededIngredientIds,
+                                   List<AdaptedIngredient> ingredientsWithAllergens) {
+        return new AdaptationResponse(id, status, recipeBadge, sourceUrl, warnings, checkNeededIngredientIds,
+                pendingQuestions, changes, requiredItems, safetySummary, ingredientsWithAllergens, steps,
+                ignoredCustomTools);
+    }
 
     public enum Status {
         COOKABLE,
@@ -55,10 +74,31 @@ public record AdaptationResponse(String id, Status status, RecipeBadge recipeBad
     public record RequiredItem(ItemKind kind, String id, String name, String reason) {
     }
 
-    /** allergenProductVaries: the allergens of this ingredient differ by product (soy sauce, curry). */
+    /**
+     * allergenProductVaries: the allergens of this ingredient differ by product (soy sauce, curry).
+     * allergens and allergenReviewed are filled in for each answer and are not part of a stored one.
+     */
     public record AdaptedIngredient(String ingredientId, String name, Original original, Display display,
                                     QuantityStatus quantityStatus, Sensitivity sensitivity,
-                                    boolean allergenProductVaries) {
+                                    boolean allergenProductVaries, List<AllergenRef> allergens,
+                                    boolean allergenReviewed) {
+
+        public AdaptedIngredient(String ingredientId, String name, Original original, Display display,
+                                 QuantityStatus quantityStatus, Sensitivity sensitivity,
+                                 boolean allergenProductVaries) {
+            this(ingredientId, name, original, display, quantityStatus, sensitivity, allergenProductVaries,
+                    List.of(), false);
+        }
+
+        /**
+         * The same ingredient with what the allergen mapping says about it: every allergen it
+         * contains, whoever the user is, and whether the mapping was reviewed. These are facts
+         * about the ingredient; the app compares them with the allergies kept on the device.
+         */
+        AdaptedIngredient withAllergens(List<AllergenRef> allAllergens, boolean reviewed) {
+            return new AdaptedIngredient(ingredientId, name, original, display, quantityStatus, sensitivity,
+                    allergenProductVaries, allAllergens, reviewed);
+        }
     }
 
     /** The source amount; always returned so the app can show it under the converted amount. */
