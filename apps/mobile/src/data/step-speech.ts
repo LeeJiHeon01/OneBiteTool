@@ -16,7 +16,7 @@ export function speakable(text: string): string {
     .trim();
 }
 
-function spokenDuration(totalSeconds: number): string {
+export function spokenDuration(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return [minutes > 0 ? `${minutes}분` : '', seconds > 0 ? `${seconds}초` : ''].filter(Boolean).join(' ');
@@ -32,7 +32,11 @@ export function stepSpeechLines(step: AdaptedStep, allergyMatches: AllergyMatch[
   if (step.deviceSetting) lines.push(`기기 설정은 ${step.deviceSetting}. 기기마다 조금씩 달라요.`);
   if (step.durationSeconds) {
     const start = step.timerStartCondition ? `${step.timerStartCondition}. ` : '';
-    lines.push(`${start}타이머는 ${spokenDuration(step.durationSeconds)}이에요. 타이머는 직접 눌러 시작해 주세요.`);
+    // A range is read as it is: the user picks one of the two, no middle value is made up.
+    const time = step.durationMaxSeconds
+      ? `${spokenDuration(step.durationSeconds)}이나 ${spokenDuration(step.durationMaxSeconds)} 가운데 고를 수 있어요`
+      : `${spokenDuration(step.durationSeconds)}이에요`;
+    lines.push(`${start}타이머는 ${time}. 타이머는 직접 눌러 시작해 주세요.`);
   }
   for (const match of allergyMatches) {
     lines.push(`알레르기 주의. ${match.ingredientName}에 ${match.allergenNames}이 들어 있어요.`);

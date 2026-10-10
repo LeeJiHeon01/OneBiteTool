@@ -81,7 +81,7 @@ class ToolNeedsTest {
     }
 
     private static Recipe.Step step(int order, String actionKey, HeatLevel heatLevel, String... toolIds) {
-        return new Recipe.Step("STEP_" + order, order, "행동", actionKey, null, null, heatLevel, null, null, null,
+        return new Recipe.Step("STEP_" + order, order, "행동", actionKey, null, null, null, heatLevel, null, null, null,
                 List.of(), List.of(toolIds));
     }
 }

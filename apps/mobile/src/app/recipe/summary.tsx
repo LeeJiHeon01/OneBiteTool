@@ -85,6 +85,9 @@ function IngredientRow({ row, hasAllergy, showProductVaries }: RowProps) {
         {/* The original amount is always shown under the converted one. */}
         {row.originalText ? <AppText style={styles.rowOriginal}>원래: {row.originalText}</AppText> : null}
         {showProductVaries ? <AppText style={styles.rowVaries}>제품마다 달라요</AppText> : null}
+        {row.measureExactly ? (
+          <AppText style={styles.rowVaries}>비율이 중요해요. 계량컵이나 종이컵으로 재 주세요.</AppText>
+        ) : null}
       </View>
       <View style={styles.badges}>
         {badgesFor(row, hasAllergy).map((badge) => (

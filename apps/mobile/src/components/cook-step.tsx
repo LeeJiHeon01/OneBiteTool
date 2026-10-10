@@ -150,7 +150,13 @@ export function CookStep({ step, heatSource, allergyMatches }: Props) {
             <HeatIndicator level={step.heatLevel} source={heatSource} />
           </View>
         ) : null}
-        {step.durationSeconds ? <StepTimer durationSeconds={step.durationSeconds} step={step} /> : null}
+        {step.durationSeconds ? (
+          <StepTimer
+            durationMaxSeconds={step.durationMaxSeconds}
+            durationSeconds={step.durationSeconds}
+            step={step}
+          />
+        ) : null}
       </View>
       {step.completionCheck ? (
         <View style={styles.look}>

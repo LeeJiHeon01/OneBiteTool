@@ -27,6 +27,10 @@ class ExtractValidator {
     private static final Pattern DURATION = Pattern.compile(
             "(\\d+(?:\\.\\d+)?)\\s*(?:[~\\-–]\\s*\\d+(?:\\.\\d+)?\\s*)?(시간|분|초)");
 
+    /** "2~3분": both ends and the unit they share. */
+    private static final Pattern RANGE = Pattern.compile(
+            "(\\d+(?:\\.\\d+)?)\\s*[~\\-–]\\s*(\\d+(?:\\.\\d+)?)\\s*(시간|분|초)");
+
     private final ReferenceData reference;
     /** Units of amounts, times and temperatures; a number with one of these may not be in a step sentence. */
     private final List<String> measuredUnits;
@@ -138,6 +142,30 @@ class ExtractValidator {
             seconds += Double.parseDouble(matcher.group(1)) * unitSeconds;
         }
         return Math.round(seconds) == step.durationSeconds();
+    }
+
+    /**
+     * The long end of a time range in seconds ("2~3분" with 120 seconds stated gives 180), read
+     * from the quote that was checked against the page. Null when the quote is not a single
+     * plain range that starts at the stated time: nothing is guessed.
+     */
+    static Integer durationMaxSeconds(Extract.Step step) {
+        if (step.durationSeconds() == null || step.durationEvidence() == null) {
+            return null;
+        }
+        Matcher matcher = RANGE.matcher(step.durationEvidence());
+        if (!matcher.find()) {
+            return null;
+        }
+        double unitSeconds = switch (matcher.group(3)) {
+            case "시간" -> 3600;
+            case "분" -> 60;
+            default -> 1;
+        };
+        long shortEnd = Math.round(Double.parseDouble(matcher.group(1)) * unitSeconds);
+        long longEnd = Math.round(Double.parseDouble(matcher.group(2)) * unitSeconds);
+        boolean single = !matcher.find();
+        return single && shortEnd == step.durationSeconds() && longEnd > shortEnd ? (int) longEnd : null;
     }
 
     /** The servings count is kept only when its quote is on the page and names the number. */

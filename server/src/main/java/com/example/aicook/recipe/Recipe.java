@@ -74,8 +74,9 @@ public record Recipe(String id, String name, Source source, String sourceUrl, St
      * @param deviceSettingRaw oven, air fryer or microwave setting exactly as the source states it
      *                         ("180°C 예열", "700W"); never converted
      */
+    /** durationMaxSeconds is the long end of a time range ("2~3분" is 120 and 180); null without a range. */
     public record Step(String id, int order, String action, String actionKey, Integer durationSeconds,
-                       String timerStartCondition, HeatLevel heatLevel, String heatRaw, String deviceSettingRaw,
+                       Integer durationMaxSeconds, String timerStartCondition, HeatLevel heatLevel, String heatRaw, String deviceSettingRaw,
                        String completionCheck,
                        List<String> ingredientIds, List<String> toolIds) {
 

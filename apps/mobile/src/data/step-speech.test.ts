@@ -15,6 +15,7 @@ function step(extra: Partial<AdaptedStep> = {}): AdaptedStep {
     heatLevel: null,
     deviceSetting: null,
     durationSeconds: null,
+    durationMaxSeconds: null,
     timerStartCondition: null,
     completionCheck: null,
     safetyNotes: [],

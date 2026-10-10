@@ -112,6 +112,7 @@ public class RecipeRepository {
                     String heat = rs.getString("heat_level");
                     return new Recipe.Step(stepId, rs.getInt("step_order"), rs.getString("action_ko"),
                             rs.getString("action_key"), (Integer) rs.getObject("duration_seconds"),
+                            (Integer) rs.getObject("duration_max_seconds"),
                             rs.getString("timer_start_condition"), heat == null ? null : HeatLevel.valueOf(heat),
                             rs.getString("heat_raw"), rs.getString("device_setting_raw"),
                             rs.getString("completion_check"),

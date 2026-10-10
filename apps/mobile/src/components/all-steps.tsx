@@ -20,7 +20,11 @@ function metaOf(step: AdaptedStep): string {
   return [
     step.heatLevel ? HEAT_INFO[step.heatLevel].label : null,
     step.deviceSetting,
-    step.durationSeconds ? formatDuration(step.durationSeconds) : null,
+    step.durationSeconds
+      ? step.durationMaxSeconds
+        ? `${formatDuration(step.durationSeconds)}~${formatDuration(step.durationMaxSeconds)}`
+        : formatDuration(step.durationSeconds)
+      : null,
   ]
     .filter(Boolean)
     .join(' · ');

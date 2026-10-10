@@ -663,6 +663,7 @@ type AdaptedStep = {
   toolIds: string[];
   visualKeys: string[];
   durationSeconds: number | null;
+  durationMaxSeconds: number | null;   // 범위 시간의 긴 값("2~3분"의 180). 범위가 아니면 null
   timerStartCondition: string | null;
   heatLevel: 'OFF' | 'LOW' | 'MEDIUM_LOW' | 'MEDIUM' | 'MEDIUM_HIGH' | 'HIGH' | null;
   heatRaw: string | null;
@@ -773,6 +774,13 @@ type AdaptedStep = {
 
 ## 9. 타이머 명세 [확정]
 
+**범위 시간** [확정 2026-10-09, 규칙 19-1]
+- 원문이 "2~3분", "10~15분"처럼 범위면 `durationSeconds`(짧은 값)와 `durationMaxSeconds`(긴 값)를 함께 저장한다. 범위가 아니면 `durationMaxSeconds`는 null.
+- GPT는 짧은 값과 시간 구절만 적는다. 긴 값은 서버가 원문 대조를 통과한 그 구절("2~3분")에서 읽는다. 구절이 단순한 범위 하나가 아니거나 짧은 값과 맞지 않으면 긴 값을 만들지 않는다.
+- 타이머 카드: 시작 전에 [2분] [3분] 선택 버튼, 기본은 짧은 쪽. 선택한 시간으로 타이머를 시작하고 알림을 예약한다. 시작한 뒤에는 선택을 바꿀 수 없고, 바꾸려면 취소 후 다시 시작한다.
+- 범위의 중간값(2분 30초 등)을 만들지 않는다. 상태 확인 문구는 타이머 카드 바로 아래에 보여준다.
+- 한 단계 한 행동으로 나뉜 단계에서는 타이머가 붙는 부분에만 따라간다.
+
 상태: `idle → running ⇄ paused`, `running →(0초) finished`, `running/paused/finished → restart → running`, `running/paused → cancel → cancelled → idle`
 
 ```ts
@@ -880,6 +888,11 @@ type TimerState = {
 - [ ] 읽어주기에 그 단계의 알레르기 경고와 안전 문구가 반드시 포함, 단계 이동 시 중단
 - [ ] 최근 검색어·즐겨찾기가 앱 재시작 후에도 유지, 개별 삭제·전체 삭제, '모두 지우기'로 삭제
 - [ ] 즐겨찾기에는 레시피 ID와 이름만 저장
+
+**범위 시간 (2026-10-09 결정, 2026-10-10 반영)**
+- [ ] "2~3분" → `durationSeconds` 120, `durationMaxSeconds` 180 저장. 긴 값은 원문 대조를 통과한 시간 구절에서 서버가 읽는다
+- [ ] 범위 단계 타이머 카드에 [2분][3분] 선택, 기본 2분, 고른 시간으로 시작·알림 예약. 시작한 뒤에는 선택 숨김
+- [ ] 범위가 아닌 단계는 선택 버튼 없음, 중간값(2분 30초)을 만들지 않음
 
 **결정 반영 (2026-10-10)**
 - [ ] 물 400mL + 생수병·종이컵 → "종이컵 2컵", 500mL → "생수병 1병", 간장 50mL(`HIGH`) → 원문보다 많지 않은 표현

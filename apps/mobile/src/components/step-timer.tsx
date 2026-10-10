@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { BottomSheet } from '@/components/bottom-sheet';
 import { Button } from '@/components/button';
@@ -7,20 +7,28 @@ import { Icon } from '@/components/icon';
 import { AppText } from '@/components/text';
 import { TimerCard, type TimerCardStatus } from '@/components/timer-card';
 import { type AdaptedStep } from '@/data/recipe';
+import { spokenDuration } from '@/data/step-speech';
 import { useAppState } from '@/state/app-state';
 import { formatSeconds, useRemainingSeconds } from '@/state/use-timer';
+import { colors } from '@/theme/tokens';
 
-type Props = { step: AdaptedStep; durationSeconds: number };
+// durationMaxSeconds: the long end when the recipe gives a range ("2~3분"); null otherwise.
+type Props = { step: AdaptedStep; durationSeconds: number; durationMaxSeconds: number | null };
 
 // Timer for one step. The app keeps a single active timer, so starting here while
 // another step's timer is active asks whether to keep or replace it.
-export function StepTimer({ step, durationSeconds }: Props) {
+export function StepTimer({ step, durationSeconds: shortSeconds, durationMaxSeconds }: Props) {
   const { timer: controls, adaptation } = useAppState();
   const { timer } = controls;
   const remaining = useRemainingSeconds(timer);
   const [confirmReplace, setConfirmReplace] = useState(false);
+  // For a range the user picks one end before starting; the short one is the default.
+  // No value in between is ever offered.
+  const [chosenSeconds, setChosenSeconds] = useState(shortSeconds);
 
   const isMine = timer?.stepId === step.id;
+  // Once started, the running timer's own time is shown and the choice is closed.
+  const durationSeconds = isMine && timer ? timer.durationSeconds : chosenSeconds;
   const status: TimerCardStatus = isMine && timer ? timer.status : 'idle';
   const otherActive = timer && !isMine && timer.status !== 'finished' ? timer : null;
   const otherStepNumber = otherActive ? (adaptation?.steps ?? []).findIndex((item) => item.id === otherActive.stepId) + 1 : 0;
@@ -40,6 +48,26 @@ export function StepTimer({ step, durationSeconds }: Props) {
 
   return (
     <>
+      {durationMaxSeconds && status === 'idle' ? (
+        <View accessibilityRole="radiogroup" style={styles.choices}>
+          {[shortSeconds, durationMaxSeconds].map((seconds) => {
+            const selected = chosenSeconds === seconds;
+            return (
+              <Pressable
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                key={seconds}
+                onPress={() => setChosenSeconds(seconds)}
+                style={[styles.choice, selected && styles.choiceOn]}
+              >
+                <AppText weight={selected ? 'bold' : 'regular'} style={[styles.choiceLabel, selected && styles.choiceLabelOn]}>
+                  {spokenDuration(seconds)}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
       <TimerCard
         durationSeconds={durationSeconds}
         finishedMessage="상태를 확인하고 다음 단계로 가세요."
@@ -72,6 +100,19 @@ export function StepTimer({ step, durationSeconds }: Props) {
 }
 
 const styles = StyleSheet.create({
+  choices: { marginBottom: 10, flexDirection: 'row', justifyContent: 'center', gap: 8 },
+  choice: {
+    minWidth: 84,
+    height: 44,
+    paddingHorizontal: 16,
+    borderRadius: 99,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  choiceOn: { backgroundColor: colors.primarySoft },
+  choiceLabel: { fontSize: 15, color: colors.text },
+  choiceLabelOn: { color: colors.primaryDark },
   reminder: {
     paddingVertical: 12,
     paddingHorizontal: 4,

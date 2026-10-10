@@ -73,6 +73,8 @@ export type AdaptedIngredient = {
   tasteAdjust: boolean;
   // Converted with the volume the user measured for their own tool, not the representative one.
   userMeasured: boolean;
+  // An ingredient whose proportion matters was left as written: the user should measure it with a cup.
+  measureExactly: boolean;
   // Only the allergens the user asked to avoid.
   allergens: AllergenRef[];
   allergyCheckNeeded: boolean;
@@ -92,6 +94,8 @@ export type AdaptedStep = {
   // Oven, air fryer or microwave setting exactly as the source states it.
   deviceSetting: string | null;
   durationSeconds: number | null;
+  // The long end when the source gives a range ("2~3분"); the user picks one. Null without a range.
+  durationMaxSeconds: number | null;
   timerStartCondition: string | null;
   completionCheck: string | null;
   safetyNotes: string[];

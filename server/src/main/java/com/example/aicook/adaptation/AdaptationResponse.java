@@ -81,6 +81,7 @@ public record AdaptationResponse(String id, Status status, RecipeBadge recipeBad
      * actionKey is the kind of action ("action.stir_fry"); the app picks the step picture and label from it.
      * mergedFromStepIds lists the recipe steps a joined step came from; empty for a step shown as stored.
      * subItems is the checklist of a joined finishing step; empty otherwise.
+     * durationMaxSeconds is the long end of a time range ("2~3분"); null when the time is not a range.
      */
     public record AdaptedStep(String stepId, int order, String action, String actionKey, String details,
                               List<String> ingredientIds,
@@ -88,7 +89,17 @@ public record AdaptationResponse(String id, Status status, RecipeBadge recipeBad
                               String timerStartCondition, HeatLevel heatLevel, String heatRaw,
                               String deviceSettingRaw, String heatVisualKey, String completionCheck,
                               List<SafetyNote> safetyNotes, List<String> mergedFromStepIds,
-                              List<SubItem> subItems) {
+                              List<SubItem> subItems, Integer durationMaxSeconds) {
+
+        public AdaptedStep(String stepId, int order, String action, String actionKey, String details,
+                           List<String> ingredientIds, List<String> toolIds, List<String> visualKeys,
+                           Integer durationSeconds, String timerStartCondition, HeatLevel heatLevel, String heatRaw,
+                           String deviceSettingRaw, String heatVisualKey, String completionCheck,
+                           List<SafetyNote> safetyNotes, List<String> mergedFromStepIds, List<SubItem> subItems) {
+            this(stepId, order, action, actionKey, details, ingredientIds, toolIds, visualKeys, durationSeconds,
+                    timerStartCondition, heatLevel, heatRaw, deviceSettingRaw, heatVisualKey, completionCheck,
+                    safetyNotes, mergedFromStepIds, subItems, null);
+        }
 
         public AdaptedStep(String stepId, int order, String action, String actionKey, String details,
                            List<String> ingredientIds, List<String> toolIds, List<String> visualKeys,
@@ -105,14 +116,14 @@ public record AdaptationResponse(String id, Status status, RecipeBadge recipeBad
                                List<SafetyNote> allSafetyNotes, List<String> mergedIds, List<SubItem> items) {
             return new AdaptedStep(stepId, newOrder, newAction, actionKey, details, allIngredientIds, toolIds,
                     visualKeys, durationSeconds, timerStartCondition, heatLevel, heatRaw, deviceSettingRaw,
-                    heatVisualKey, completionCheck, allSafetyNotes, mergedIds, items);
+                    heatVisualKey, completionCheck, allSafetyNotes, mergedIds, items, durationMaxSeconds);
         }
 
         /** Same step at another position in the list. */
         AdaptedStep withOrder(int newOrder) {
             return new AdaptedStep(stepId, newOrder, action, actionKey, details, ingredientIds, toolIds, visualKeys,
                     durationSeconds, timerStartCondition, heatLevel, heatRaw, deviceSettingRaw, heatVisualKey,
-                    completionCheck, safetyNotes, mergedFromStepIds, subItems);
+                    completionCheck, safetyNotes, mergedFromStepIds, subItems, durationMaxSeconds);
         }
 
         /** This step joined with the same action on other ingredients; mergedIds lists every source step. */
@@ -120,7 +131,7 @@ public record AdaptationResponse(String id, Status status, RecipeBadge recipeBad
                                List<SafetyNote> allSafetyNotes, List<String> mergedIds) {
             return new AdaptedStep(stepId, newOrder, newAction, actionKey, details, allIngredientIds, toolIds,
                     visualKeys, durationSeconds, timerStartCondition, heatLevel, heatRaw, deviceSettingRaw,
-                    heatVisualKey, completionCheck, allSafetyNotes, mergedIds);
+                    heatVisualKey, completionCheck, allSafetyNotes, mergedIds, List.of(), durationMaxSeconds);
         }
 
         /**
@@ -135,14 +146,15 @@ public record AdaptationResponse(String id, Status status, RecipeBadge recipeBad
                     keepsTimer ? timerStartCondition : null, keepsHeat ? heatLevel : null,
                     keepsHeat ? heatRaw : null, keepsTimer ? deviceSettingRaw : null,
                     keepsHeat ? heatVisualKey : null, keepsTimer ? completionCheck : null, safetyNotes,
-                    mergedFromStepIds.isEmpty() ? List.of(stepId) : mergedFromStepIds, List.of());
+                    mergedFromStepIds.isEmpty() ? List.of(stepId) : mergedFromStepIds, List.of(),
+                    keepsTimer ? durationMaxSeconds : null);
         }
 
         /** Same step with other wording; time, heat, check and safety notes stay as they are. */
         AdaptedStep withText(String newAction, String newDetails) {
             return new AdaptedStep(stepId, order, newAction, actionKey, newDetails, ingredientIds, toolIds, visualKeys,
                     durationSeconds, timerStartCondition, heatLevel, heatRaw, deviceSettingRaw, heatVisualKey,
-                    completionCheck, safetyNotes, mergedFromStepIds, subItems);
+                    completionCheck, safetyNotes, mergedFromStepIds, subItems, durationMaxSeconds);
         }
     }
 

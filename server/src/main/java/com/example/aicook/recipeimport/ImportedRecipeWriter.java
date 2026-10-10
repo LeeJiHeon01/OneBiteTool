@@ -158,10 +158,10 @@ public class ImportedRecipeWriter {
         for (Extract.Step step : steps) {
             String stepId = jdbc.sql("""
                             INSERT INTO recipe_step (recipe_id, step_order, action_ko, action_key, duration_seconds,
-                                                     timer_start_condition, heat_level, heat_raw, device_setting_raw,
-                                                     completion_check)
-                            VALUES (:recipeId, :order, :action, :actionKey, :duration, :timerStart, :heatLevel,
-                                    :heatRaw, :deviceSettingRaw, :completionCheck)
+                                                     duration_max_seconds, timer_start_condition, heat_level,
+                                                     heat_raw, device_setting_raw, completion_check)
+                            VALUES (:recipeId, :order, :action, :actionKey, :duration, :durationMax, :timerStart,
+                                    :heatLevel, :heatRaw, :deviceSettingRaw, :completionCheck)
                             RETURNING id
                             """)
                     .param("recipeId", recipeId)
@@ -169,6 +169,8 @@ public class ImportedRecipeWriter {
                     .param("action", step.action().strip())
                     .param("actionKey", step.actionKey())
                     .param("duration", step.durationSeconds())
+                    // "2~3분": the long end is read from the quote, never made up.
+                    .param("durationMax", ExtractValidator.durationMaxSeconds(step))
                     // A start condition only makes sense for a step that has a time.
                     .param("timerStart", step.durationSeconds() == null ? null : step.timerStartCondition())
                     .param("heatLevel", step.heatLevel() == null ? null : step.heatLevel().name())

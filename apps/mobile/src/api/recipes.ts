@@ -64,6 +64,7 @@ type AdaptationDto = {
       userMeasured: boolean;
     };
     quantityStatus: QuantityStatus;
+    sensitivity?: 'HIGH' | 'RATIO' | 'NORMAL';
     allergenProductVaries: boolean;
   }[];
   steps: {
@@ -73,6 +74,7 @@ type AdaptationDto = {
     details: string | null;
     ingredientIds: string[];
     durationSeconds: number | null;
+    durationMaxSeconds?: number | null;
     timerStartCondition: string | null;
     heatLevel: HeatLevel | 'OFF' | null;
     deviceSettingRaw: string | null;
@@ -203,6 +205,8 @@ function toIngredient(dto: AdaptationDto, row: AdaptationDto['ingredients'][numb
     quantityStatus: row.quantityStatus,
     tasteAdjust: row.display.tasteAdjust,
     userMeasured: row.display.userMeasured === true,
+    // The proportion matters (rice water, batter) and the amount could not be converted closely enough.
+    measureExactly: row.sensitivity === 'RATIO' && row.quantityStatus === 'NEEDS_CHECK',
     allergens: dto.allergyWarnings
       .filter((warning) => warning.ingredientId === row.ingredientId)
       .map((warning) => ({ code: warning.allergenCode, hidden: warning.hidden })),
@@ -223,6 +227,7 @@ function toStep(step: AdaptationDto['steps'][number]): AdaptedStep {
     heatLevel: step.heatLevel === 'OFF' ? null : step.heatLevel,
     deviceSetting: step.deviceSettingRaw,
     durationSeconds: step.durationSeconds,
+    durationMaxSeconds: step.durationMaxSeconds ?? null,
     timerStartCondition: step.timerStartCondition,
     completionCheck: step.completionCheck,
     safetyNotes: step.safetyNotes.map((note) => (note.detail ? `${note.message} ${note.detail}` : note.message)),
