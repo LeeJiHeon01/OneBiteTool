@@ -120,19 +120,48 @@ public class AdaptationService {
                         versions.model()));
             }
         }
-        // Allergy lists belong to this request only: they are never stored.
+        // The warnings belong to this request only: they depend on the user's allergies and are never stored.
+        Map<String, String> ingredientCodes = ingredientCodes(recipe, ingredientPlan);
         return answer.withAllergy(allergyWarnings(recipe, conditions, ingredientPlan),
                 allergyCheckNeeded(recipe, conditions, ingredientPlan),
-                answer.ingredients().stream()
-                        .map(ingredient -> withAllergenFacts(recipe, ingredient, ingredientPlan))
-                        .toList());
+                withAllergenFacts(answer.ingredients(), ingredientCodes));
     }
 
-    /** A stored answer by its id, without allergy lists: those are only given for a request that states the allergies. */
+    /**
+     * A stored answer by its id. Each ingredient says what it contains (facts from the allergen
+     * mapping, the same as in the answer to a request); the lists that depend on a user's
+     * allergies are empty, because no allergy is ever given here.
+     */
     public AdaptationResponse findStored(String id) {
-        return Optional.ofNullable(cache).flatMap(storedAnswers -> storedAnswers.findById(id))
-                .map(AdaptationCache.Entry::response)
+        AdaptationCache.Entry entry = Optional.ofNullable(cache).flatMap(storedAnswers -> storedAnswers.findById(id))
                 .orElseThrow(() -> ApiException.notFound("ADAPTATION_NOT_FOUND", "저장된 맞춤 레시피를 찾지 못했어요."));
+        AdaptationResponse response = entry.response();
+        return response.withAllergy(List.of(), List.of(),
+                withAllergenFacts(response.ingredients(), entry.ingredientCodes()));
+    }
+
+    /** Dictionary code of every ingredient that is used, the substitute's when one was chosen. */
+    private Map<String, String> ingredientCodes(Recipe recipe, IngredientPlanner.Plan plan) {
+        Map<String, String> codes = new LinkedHashMap<>();
+        usedIngredients(recipe, plan).forEach(ingredient -> {
+            String code = StepAssembler.effectiveDictionaryCode(recipe, ingredient.id(), plan);
+            if (code != null) {
+                codes.put(ingredient.id(), code);
+            }
+        });
+        return codes;
+    }
+
+    /** What each ingredient contains, read from the allergen mapping as it is now. An ingredient outside the dictionary has no entry. */
+    private List<AdaptedIngredient> withAllergenFacts(List<AdaptedIngredient> ingredients,
+                                                      Map<String, String> ingredientCodes) {
+        return ingredients.stream()
+                .map(ingredient -> {
+                    String code = ingredientCodes.get(ingredient.ingredientId());
+                    return ingredient.withAllergens(reference.allergensOf(code).orElse(List.of()),
+                            reference.allergenProductVaries(code), reference.allergenReviewLevel(code));
+                })
+                .toList();
     }
 
     /** complete: the AI worded every step, so the answer may be stored. */
@@ -170,14 +199,10 @@ public class AdaptationService {
                 .sorted(Map.Entry.comparingByKey())
                 .map(entry -> entry.getKey() + "=" + entry.getValue().substituteToolId())
                 .toList());
+        // Which dictionary entry each ingredient is: follows from the decisions above, and lets a
+        // stored answer look up what its ingredients contain when it is read by id.
+        key.put(AdaptationCache.INGREDIENT_CODES, ingredientCodes(recipe, ingredientPlan));
         return key;
-    }
-
-    private AdaptedIngredient withAllergenFacts(Recipe recipe, AdaptedIngredient ingredient,
-                                                IngredientPlanner.Plan plan) {
-        String code = StepAssembler.effectiveDictionaryCode(recipe, ingredient.ingredientId(), plan);
-        return ingredient.withAllergens(reference.allergensOf(code).orElse(List.of()),
-                reference.isAllergenReviewed(code));
     }
 
     /** Builds the answer without any allergy list. */

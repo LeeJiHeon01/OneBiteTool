@@ -1,6 +1,7 @@
 package com.example.aicook.adaptation;
 
 import com.example.aicook.adaptation.AdaptationRequest.Profile;
+import com.example.aicook.adaptation.AdaptationResponse.AdaptedIngredient;
 import com.example.aicook.adaptation.AdaptationResponse.AdaptedStep;
 import com.example.aicook.ai.OpenAiClient;
 import com.example.aicook.common.ApiException;
@@ -10,6 +11,8 @@ import com.example.aicook.recipe.Recipe.HeatLevel;
 import com.example.aicook.recipe.Recipe.SkillLevel;
 import com.example.aicook.recipe.RecipeService;
 import com.example.aicook.reference.ReferenceData;
+import com.example.aicook.reference.Rules.AllergenRef;
+import com.example.aicook.reference.Rules.ReviewLevel;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -120,12 +123,58 @@ class AdaptationCacheTest {
                 .param("id", recipeId).query(String.class).single();
         assertThat(conditions).doesNotContainIgnoringCase("shrimp").doesNotContainIgnoringCase("allerg");
         assertThat(payload).doesNotContainIgnoringCase("shrimp");
-        // The stored answer has no allergy list at all, not even an ingredient's own allergens.
+        // Read by id, the lists that depend on a user's allergies are empty.
         AdaptationResponse stored = service.findStored(withAllergy.id());
         assertThat(stored.allergyWarnings()).isEmpty();
         assertThat(stored.allergyCheckNeededIngredientIds()).isEmpty();
-        assertThat(stored.ingredients()).allSatisfy(ingredient -> assertThat(ingredient.allergens()).isEmpty());
         assertThat(stored.steps()).isEqualTo(withAllergy.steps());
+    }
+
+    @Test
+    void readingByIdGivesTheSameIngredientAllergenFactsAsARequest() {
+        AdaptationResponse posted = adapt(SkillLevel.LOW, List.of("shrimp"));
+        AdaptationResponse read = service.findStored(posted.id());
+
+        // What each ingredient contains is about the ingredient, not the user: both answers agree.
+        assertThat(read.ingredients()).isEqualTo(posted.ingredients());
+        assertThat(read.ingredients()).isNotEmpty().allSatisfy(ingredient -> {
+            assertThat(ingredient.allergenReviewLevel()).isEqualTo(ReviewLevel.AI_RESEARCHED);
+            assertThat(ingredient.allergenReviewed()).isTrue();
+        });
+        AdaptedIngredient kimchi = ingredientNamed(read, "김치");
+        AdaptedIngredient soySauce = ingredientNamed(read, "간장");
+        assertThat(kimchi.allergens()).extracting(AllergenRef::code).contains("shrimp");
+        assertThat(soySauce.allergens()).extracting(AllergenRef::code).contains("soybean", "wheat");
+        assertThat(soySauce.allergenProductVaries()).isTrue();
+        // The facts are the same for someone without allergies, and for a cached answer.
+        assertThat(adapt(SkillLevel.LOW, List.of()).ingredients()).isEqualTo(posted.ingredients());
+        // They are looked up when the answer is read, not kept in the stored answer.
+        String payload = jdbc.sql("SELECT payload::text FROM adapted_recipe WHERE id = :id")
+                .param("id", posted.id()).query(String.class).single();
+        assertThat(payload).doesNotContain("shrimp").doesNotContain("AI_RESEARCHED");
+    }
+
+    @Test
+    void storedRowHoldsNothingThatIdentifiesAUserOrDevice() {
+        adapt(SkillLevel.LOW, List.of("shrimp"));
+
+        List<String> columns = jdbc.sql("""
+                        SELECT column_name FROM information_schema.columns
+                        WHERE table_schema = 'public' AND table_name = 'adapted_recipe' ORDER BY column_name
+                        """)
+                .query(String.class).list();
+        assertThat(columns).containsExactlyInAnyOrder("id", "recipe_id", "conditions_hash", "conditions_json",
+                "status", "payload", "ai_model", "created_at", "created_by", "updated_at", "updated_by");
+        // No account, device or address: the row is written by the server itself.
+        assertThat(jdbc.sql("SELECT DISTINCT created_by || '/' || updated_by FROM adapted_recipe WHERE recipe_id = :id")
+                .param("id", recipeId).query(String.class).list()).containsExactly("SYSTEM/SYSTEM");
+        String conditions = jdbc.sql("SELECT conditions_json::text FROM adapted_recipe WHERE recipe_id = :id")
+                .param("id", recipeId).query(String.class).single();
+        Map<String, Object> keys = Json.parse(conditions, Map.class);
+        assertThat(keys.keySet()).containsExactlyInAnyOrder("logicVersion", "seedVersion", "promptVersion", "recipeId",
+                "recipeVersion", "servings", "skillLevel", "toolIds", "heatSource", "customToolVolumes",
+                "ignoredCustomTools", "missingIngredientIds", "ingredientDecisions", "toolSubstitutions",
+                "ingredientCodes");
     }
 
     @Test
@@ -133,8 +182,7 @@ class AdaptationCacheTest {
         AdaptationResponse response = adapt(SkillLevel.LOW, List.of());
 
         // Facts about the ingredient, the same whoever asks; the app compares them with the device's allergies.
-        assertThat(response.ingredients().stream().filter(ingredient -> ingredient.name().equals("김치")).findFirst()
-                .orElseThrow().allergens()).extracting(allergen -> allergen.code()).contains("shrimp");
+        assertThat(ingredientNamed(response, "김치").allergens()).extracting(AllergenRef::code).contains("shrimp");
         assertThat(response.ingredients()).allSatisfy(ingredient -> assertThat(ingredient.allergenReviewed()).isTrue());
         assertThat(response.allergyWarnings()).isEmpty();
     }
@@ -202,6 +250,11 @@ class AdaptationCacheTest {
         List<AdaptedStep> steps = adapt(SkillLevel.LOW, List.of()).steps();
         assertThat(steps.stream().map(AdaptedStep::heatVisualKey).filter(key -> key != null))
                 .isNotEmpty().allMatch(HeatVisuals::isReady);
+    }
+
+    private static AdaptedIngredient ingredientNamed(AdaptationResponse response, String name) {
+        return response.ingredients().stream().filter(ingredient -> ingredient.name().equals(name)).findFirst()
+                .orElseThrow();
     }
 
     private AdaptationService serviceWith(CacheVersions cacheVersions) {

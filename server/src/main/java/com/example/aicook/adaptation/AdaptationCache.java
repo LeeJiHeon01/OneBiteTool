@@ -19,8 +19,18 @@ import java.util.Optional;
 @Repository
 class AdaptationCache {
 
-    /** id is the adapted_recipe id; response is the stored answer without any allergy lists. */
-    record Entry(String id, AdaptationResponse response) {
+    /**
+     * id is the adapted_recipe id; response is the stored answer without any allergy lists.
+     * ingredientCodes maps each ingredient of the answer to its dictionary code (the substitute's
+     * when one was used), so what the ingredient contains can be looked up when the answer is read.
+     */
+    record Entry(String id, AdaptationResponse response, Map<String, String> ingredientCodes) {
+    }
+
+    /** Key in the stored conditions under which the dictionary codes of the ingredients are kept. */
+    static final String INGREDIENT_CODES = "ingredientCodes";
+
+    private record StoredConditions(Map<String, String> ingredientCodes) {
     }
 
     private final JdbcClient jdbc;
@@ -41,17 +51,20 @@ class AdaptationCache {
     }
 
     Optional<Entry> find(String recipeId, String conditionsHash) {
-        return jdbc.sql("SELECT id, payload FROM adapted_recipe WHERE recipe_id = :recipeId AND conditions_hash = :hash")
+        return jdbc.sql("""
+                        SELECT id, payload, conditions_json FROM adapted_recipe
+                        WHERE recipe_id = :recipeId AND conditions_hash = :hash
+                        """)
                 .param("recipeId", recipeId)
                 .param("hash", conditionsHash)
-                .query((rs, row) -> entry(rs.getString("id"), rs.getString("payload")))
+                .query((rs, row) -> entry(rs.getString("id"), rs.getString("payload"), rs.getString("conditions_json")))
                 .optional();
     }
 
     Optional<Entry> findById(String id) {
-        return jdbc.sql("SELECT id, payload FROM adapted_recipe WHERE id = :id")
+        return jdbc.sql("SELECT id, payload, conditions_json FROM adapted_recipe WHERE id = :id")
                 .param("id", id)
-                .query((rs, row) -> entry(rs.getString("id"), rs.getString("payload")))
+                .query((rs, row) -> entry(rs.getString("id"), rs.getString("payload"), rs.getString("conditions_json")))
                 .optional();
     }
 
@@ -76,7 +89,9 @@ class AdaptationCache {
                 .query(String.class).single();
     }
 
-    private static Entry entry(String id, String payload) {
-        return new Entry(id.strip(), Json.parse(payload, AdaptationResponse.class).withId(id.strip()));
+    private static Entry entry(String id, String payload, String conditions) {
+        Map<String, String> codes = Json.parse(conditions, StoredConditions.class).ingredientCodes();
+        return new Entry(id.strip(), Json.parse(payload, AdaptationResponse.class).withId(id.strip()),
+                codes == null ? Map.of() : codes);
     }
 }

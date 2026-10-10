@@ -51,18 +51,30 @@ class AdaptationWarmup {
         List<Fixture> fixtures = jdbc.sql("SELECT id, base_servings FROM recipe WHERE source = 'FIXTURE' ORDER BY id")
                 .query((rs, row) -> new Fixture(rs.getString("id").strip(), rs.getDouble("base_servings")))
                 .list();
+        long startedAt = System.currentTimeMillis();
+        int stored = 0;
+        int notStored = 0;
+        int failed = 0;
         for (Fixture fixture : fixtures) {
             for (SkillLevel skillLevel : SkillLevel.values()) {
                 try {
                     Profile profile = new Profile(skillLevel, TYPICAL_TOOLS, null, List.of());
-                    adaptations.adapt(new AdaptationRequest(fixture.id(), (int) fixture.servings(), List.of(),
-                            List.of(), profile));
+                    AdaptationResponse response = adaptations.adapt(new AdaptationRequest(fixture.id(),
+                            (int) fixture.servings(), List.of(), List.of(), profile));
+                    // Only a fully worded answer is stored and gets a stored id.
+                    if (response.id().startsWith("ADAPT_")) {
+                        stored++;
+                    } else {
+                        notStored++;
+                    }
                 } catch (RuntimeException exception) {
+                    failed++;
                     log.warn("Warm-up of recipe {} for {} failed: {}", fixture.id(), skillLevel,
                             exception.getClass().getSimpleName());
                 }
             }
         }
-        log.info("Adaptation warm-up finished for {} fixture recipes", fixtures.size());
+        log.info("Adaptation warm-up finished in {} ms: {} fixture recipes, {} stored, {} not stored, {} failed",
+                System.currentTimeMillis() - startedAt, fixtures.size(), stored, notStored, failed);
     }
 }

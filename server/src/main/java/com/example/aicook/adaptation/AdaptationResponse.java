@@ -4,6 +4,7 @@ import com.example.aicook.measure.MeasureResult.QuantityStatus;
 import com.example.aicook.recipe.Recipe.HeatLevel;
 import com.example.aicook.recipe.RecipeDtos.RecipeBadge;
 import com.example.aicook.reference.Rules.AllergenRef;
+import com.example.aicook.reference.Rules.ReviewLevel;
 import com.example.aicook.reference.Sensitivity;
 
 import java.util.List;
@@ -76,28 +77,32 @@ public record AdaptationResponse(String id, Status status, RecipeBadge recipeBad
 
     /**
      * allergenProductVaries: the allergens of this ingredient differ by product (soy sauce, curry).
-     * allergens and allergenReviewed are filled in for each answer and are not part of a stored one.
+     * allergens, allergenReviewed and allergenReviewLevel describe the ingredient, not the user:
+     * every allergen it contains and how far the mapping was reviewed. They are read from the
+     * allergen mapping for each answer (POST and GET alike) and are not part of a stored one.
      */
     public record AdaptedIngredient(String ingredientId, String name, Original original, Display display,
                                     QuantityStatus quantityStatus, Sensitivity sensitivity,
                                     boolean allergenProductVaries, List<AllergenRef> allergens,
-                                    boolean allergenReviewed) {
+                                    boolean allergenReviewed, ReviewLevel allergenReviewLevel) {
 
         public AdaptedIngredient(String ingredientId, String name, Original original, Display display,
                                  QuantityStatus quantityStatus, Sensitivity sensitivity,
                                  boolean allergenProductVaries) {
             this(ingredientId, name, original, display, quantityStatus, sensitivity, allergenProductVaries,
-                    List.of(), false);
+                    List.of(), false, null);
         }
 
         /**
          * The same ingredient with what the allergen mapping says about it: every allergen it
-         * contains, whoever the user is, and whether the mapping was reviewed. These are facts
-         * about the ingredient; the app compares them with the allergies kept on the device.
+         * contains, whoever the user is, whether its contents differ by product and how far the
+         * mapping was reviewed (null: not reviewed). These are facts about the ingredient; the
+         * app compares them with the allergies kept on the device.
          */
-        AdaptedIngredient withAllergens(List<AllergenRef> allAllergens, boolean reviewed) {
+        AdaptedIngredient withAllergens(List<AllergenRef> allAllergens, boolean productVaries,
+                                        ReviewLevel reviewLevel) {
             return new AdaptedIngredient(ingredientId, name, original, display, quantityStatus, sensitivity,
-                    allergenProductVaries, allAllergens, reviewed);
+                    productVaries, allAllergens, reviewLevel != null, reviewLevel);
         }
     }
 
