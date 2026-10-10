@@ -33,7 +33,7 @@ public record AdaptationResponse(String id, Status status, RecipeBadge recipeBad
     public record PendingQuestion(String ingredientId, String substituteId, String substituteName) {
     }
 
-    /** OMIT_BY_USER: left out because the user lacks it; no verified rule says the dish works without it. */
+    /** OMIT_BY_USER is no longer produced (2026-10-10): only listed ingredients are left out, as OMIT. */
     public enum ChangeType {
         OMIT,
         OMIT_BY_USER,

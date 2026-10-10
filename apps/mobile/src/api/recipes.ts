@@ -266,6 +266,14 @@ export async function searchRecipes(query: string, toolIds: string[]): Promise<S
   return results.map(toSearchResult);
 }
 
+// Stored recipes with a name like the query, shown when the dish itself could not be found.
+export async function fetchSimilar(query: string, toolIds: string[]): Promise<SearchResult[]> {
+  const results = await get<SearchResultDto[]>(
+    `/api/recipes/similar?q=${encodeURIComponent(query)}${toolsParam(toolIds, '&')}`,
+  );
+  return results.map(toSearchResult);
+}
+
 // Recipes the server already has; opening one needs no web import.
 export async function fetchSuggestions(): Promise<SearchResult[]> {
   const results = await get<SearchResultDto[]>('/api/recipes/suggestions');

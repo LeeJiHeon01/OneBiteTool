@@ -173,6 +173,20 @@ class ToolFitTest {
                 .andExpect(jsonPath("$[0].toolFit").value(nullValue()));
     }
 
+    @Test
+    void similarNamesAreFoundAmongStoredRecipesOnly() throws Exception {
+        boiledRecipe("비슷한찌개 하나");
+        mixedRecipe("전혀다른무침");
+
+        assertThat(recipes.similar("비슷한찌개 둘", null)).extracting(SearchResult::name)
+                .containsExactly("비슷한찌개 하나");
+        assertThat(recipes.similar("쿠키", null)).isEmpty();
+        mockMvc.perform(get("/api/recipes/similar").param("q", "비슷한찌개").param("tools", "pot,gas_stove"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("비슷한찌개 하나"))
+                .andExpect(jsonPath("$[0].toolFit.ok").value(true));
+    }
+
     /** A recipe with one boiling step that names no tool. */
     private String boiledRecipe(String name) {
         return save(name, "action.boil", "물을 끓여요");

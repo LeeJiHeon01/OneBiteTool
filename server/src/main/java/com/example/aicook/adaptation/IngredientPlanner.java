@@ -8,6 +8,7 @@ import com.example.aicook.adaptation.AdaptationResponse.RequiredItem;
 import com.example.aicook.common.Json;
 import com.example.aicook.common.Korean;
 import com.example.aicook.recipe.Recipe;
+import com.example.aicook.recipe.ToolNeeds;
 import com.example.aicook.reference.ReferenceData;
 import com.example.aicook.reference.Rules.Ingredient;
 import com.example.aicook.reference.Rules.IngredientRule;
@@ -17,22 +18,41 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Decides what happens to each ingredient the user does not have. Verified rules stored in
- * adaptation_rule come first. Without a rule, an ingredient the dish is built around is
- * required; any other one is left out at the user's choice and reported as unverified.
+ * adaptation_rule come first. Without a rule, only an ingredient on the "may be left out" list
+ * (data/seed/adaptation-rules.json, omittable) is dropped; every other one is required.
  */
 class IngredientPlanner {
 
     private static final String NAMED_REASON = "요리 이름에 들어간 재료라 꼭 필요해요";
     private static final String MAIN_REASON = "이 요리의 중심 재료라 꼭 필요해요";
-    private static final String UNVERIFIED_IMPACT = "빼도 되는지 확인된 규칙이 없어요. 맛이나 식감이 달라질 수 있어요.";
+    private static final String NOT_OMITTABLE_REASON = "빼도 된다고 확인된 재료가 아니라 필요해요";
+    private static final String PLATE_ACTION = "action.plate";
+    private static final SeedRules SEED = Json.readResource("seed/adaptation-rules.json", SeedRules.class);
     /** Categories that can be the centre of a dish (data/seed/adaptation-rules.json). */
-    private static final List<String> MAIN_CATEGORIES =
-            Json.readResource("seed/adaptation-rules.json", MainCategories.class).mainIngredientCategories();
+    private static final List<String> MAIN_CATEGORIES = SEED.mainIngredientCategories();
 
-    record MainCategories(List<String> mainIngredientCategories) {
+    record SeedRules(List<String> mainIngredientCategories, List<Omittable> omittable) {
+    }
+
+    /** When the ingredient may be dropped: always, or only where the recipe uses it to finish the dish. */
+    enum OmitWhen {
+        ALWAYS,
+        PLATING,
+        FINISHING
+    }
+
+    /**
+     * An ingredient the dish still works without.
+     *
+     * @param names   when not empty, only an ingredient the recipe writes with one of these words
+     *                (홍고추 and 청양고추 share one dictionary entry)
+     * @param message what the user is told when it is dropped
+     */
+    record Omittable(String ingredient, List<String> names, OmitWhen when, String message) {
     }
 
     enum Kind {
@@ -82,11 +102,18 @@ class IngredientPlanner {
         return new Plan(resolutions, changes, questions, required);
     }
 
-    /** requiredReason is set when the ingredient cannot be left out. */
-    private record Outcome(Resolution resolution, IngredientRule rule, String requiredReason) {
+    /**
+     * requiredReason is set when the ingredient cannot be left out; omitMessage when it is
+     * dropped through the "may be left out" list rather than a stored rule.
+     */
+    private record Outcome(Resolution resolution, IngredientRule rule, String requiredReason, String omitMessage) {
 
         Outcome(Resolution resolution, IngredientRule rule) {
-            this(resolution, rule, null);
+            this(resolution, rule, null, null);
+        }
+
+        Outcome(Resolution resolution, IngredientRule rule, String requiredReason) {
+            this(resolution, rule, requiredReason, null);
         }
     }
 
@@ -112,8 +139,50 @@ class IngredientPlanner {
         if (requiredReason != null) {
             return new Outcome(new Resolution(Kind.REQUIRED, null), null, requiredReason);
         }
-        // No rule and not central to the dish: the user cooks without it, at their own choice.
-        return new Outcome(new Resolution(Kind.OMIT, null), null);
+        Optional<Omittable> omittable = omittable(recipe, ingredient);
+        if (omittable.isPresent()) {
+            return new Outcome(new Resolution(Kind.OMIT, null), null, null, omittable.get().message());
+        }
+        // Not on the list: leaving it out is not a verified change, so the dish needs it.
+        return new Outcome(new Resolution(Kind.REQUIRED, null), null, NOT_OMITTABLE_REASON);
+    }
+
+    /** The list entry that lets this ingredient be dropped in this recipe, if any. */
+    private Optional<Omittable> omittable(Recipe recipe, Recipe.Ingredient ingredient) {
+        String written = compact(ingredient.name());
+        return SEED.omittable().stream()
+                .filter(entry -> entry.ingredient().equals(ingredient.dictionaryCode()))
+                .filter(entry -> entry.names().isEmpty()
+                        || entry.names().stream().anyMatch(name -> written.contains(compact(name))))
+                .filter(entry -> appliesIn(recipe, ingredient, entry.when()))
+                .findFirst();
+    }
+
+    /** A condition that cannot be decided from the steps counts as not met. */
+    private boolean appliesIn(Recipe recipe, Recipe.Ingredient ingredient, OmitWhen when) {
+        if (when == OmitWhen.ALWAYS) {
+            return true;
+        }
+        List<Recipe.Step> uses = recipe.steps().stream()
+                .filter(step -> step.ingredientIds().contains(ingredient.id()))
+                .toList();
+        if (uses.isEmpty()) {
+            return false;
+        }
+        if (when == OmitWhen.PLATING) {
+            return uses.stream().allMatch(step -> PLATE_ACTION.equals(step.actionKey()));
+        }
+        int lastHeatingOrder = recipe.steps().stream()
+                .filter(IngredientPlanner::isHeating)
+                .mapToInt(Recipe.Step::order)
+                .max().orElse(0);
+        return uses.stream().allMatch(step -> PLATE_ACTION.equals(step.actionKey())
+                || (!isHeating(step) && step.durationSeconds() == null && step.actionKey() != null
+                        && step.order() > lastHeatingOrder));
+    }
+
+    private static boolean isHeating(Recipe.Step step) {
+        return step.usesHeat() || ToolNeeds.isHeatingAction(step.actionKey()) || step.deviceSettingRaw() != null;
     }
 
     /**
@@ -193,9 +262,9 @@ class IngredientPlanner {
         IngredientRule rule = outcome.rule();
         switch (outcome.resolution().kind()) {
             case OMIT -> changes.add(rule == null
-                    // Not a verified omission: the app says so instead of presenting it as safe to skip.
-                    ? new Change(ChangeType.OMIT_BY_USER, ingredient.id(),
-                            ingredient.name() + " 없이 만들어요.", UNVERIFIED_IMPACT)
+                    // Dropped through the "may be left out" list, with the list's own explanation.
+                    ? new Change(ChangeType.OMIT, ingredient.id(),
+                            ingredient.name() + " 없이 만들어요.", outcome.omitMessage())
                     : new Change(ChangeType.OMIT, ingredient.id(), omitText(ingredient), rule.impact()));
             case SUBSTITUTE -> changes.add(new Change(ChangeType.SUBSTITUTE, ingredient.id(),
                     Korean.topic(ingredient.name()) + " " + Korean.with(nameOf(rule.substituteCode())) + " 바꿔요.",

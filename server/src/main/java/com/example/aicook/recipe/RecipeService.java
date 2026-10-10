@@ -22,6 +22,9 @@ import java.util.stream.Collectors;
 public class RecipeService {
 
     private static final int SUGGESTION_COUNT = 6;
+    private static final int SIMILAR_COUNT = 5;
+    /** Stored recipes looked at when searching for similar names. */
+    private static final int SIMILAR_POOL = 500;
 
     private final RecipeRepository recipes;
     private final ReferenceData reference;
@@ -60,6 +63,35 @@ public class RecipeService {
 
     public List<SearchResult> suggestions() {
         return suggestions(null);
+    }
+
+    /**
+     * Stored recipes whose name shares two or more characters in a row with the query, the most
+     * alike first: shown when a dish could not be found. No AI is involved.
+     */
+    public List<SearchResult> similar(String query, List<String> ownedTools) {
+        String needle = RecipeRepository.normalize(query);
+        Set<String> pairs = pairsOf(needle);
+        Set<String> owned = knownTools(ownedTools);
+        record Scored(Recipe recipe, long shared) {
+        }
+        return recipes.findStored(SIMILAR_POOL).stream()
+                .map(recipe -> new Scored(recipe, pairsOf(RecipeRepository.normalize(recipe.name())).stream()
+                        .filter(pairs::contains).count()))
+                .filter(scored -> scored.shared() > 0)
+                .sorted(Comparator.comparingLong(Scored::shared).reversed())
+                .limit(SIMILAR_COUNT)
+                .map(scored -> toSearchResult(scored.recipe(), owned))
+                .toList();
+    }
+
+    /** Every two neighbouring characters of the text ("김치찌개" -> 김치, 치찌, 찌개). */
+    private static Set<String> pairsOf(String text) {
+        Set<String> pairs = new java.util.LinkedHashSet<>();
+        for (int index = 0; index + 2 <= text.length(); index++) {
+            pairs.add(text.substring(index, index + 2));
+        }
+        return pairs;
     }
 
     /** Recipes already stored, for the home screen: they open at once, without a web import. */

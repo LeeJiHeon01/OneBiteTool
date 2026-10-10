@@ -97,7 +97,7 @@ class IngredientClassificationTest {
     @Test
     void waterMixedWithARatioIngredientIsHeldToTheRatioTolerance() {
         double cupMl = reference.tool("paper_cup_small").orElseThrow().representativeVolumeMl();
-        // 1.19 cups: the nearest mark (1 and 1/3) is 12% more: fine for ordinary water, not for rice water.
+        // 1.19 cups: the nearest mark (1 and 1/3) is 12% more, beyond the 10% a liquid is allowed.
         String water = Math.round(cupMl * 1.19) + "ml";
 
         AdaptationResponse withRice = adapt(recipe("밥", ingredient("쌀", "1컵"), ingredient("물", water)),
@@ -106,8 +106,13 @@ class IngredientClassificationTest {
 
         assertThat(row(withRice, "물").sensitivity()).isEqualTo(Sensitivity.RATIO);
         assertThat(row(withRice, "물").quantityStatus()).isEqualTo(QuantityStatus.NEEDS_CHECK);
+        // Rice water is not approximated at all: the source amount stays.
+        assertThat(row(withRice, "물").display().toolVariantId()).isNull();
         assertThat(row(alone, "물").sensitivity()).isEqualTo(Sensitivity.NORMAL);
-        assertThat(row(alone, "물").quantityStatus()).isEqualTo(QuantityStatus.CONVERTED_APPROX);
+        // Ordinary water is a liquid too: beyond 10% it gets the closest amount, marked for checking.
+        assertThat(row(alone, "물").quantityStatus()).isEqualTo(QuantityStatus.NEEDS_CHECK);
+        assertThat(row(alone, "물").display().toolVariantId()).isEqualTo("paper_cup_small");
+        assertThat(row(alone, "물").display().text()).isEqualTo("종이컵 1컵과 1/3");
     }
 
     @Test

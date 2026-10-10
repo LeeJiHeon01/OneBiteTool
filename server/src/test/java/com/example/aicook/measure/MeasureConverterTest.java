@@ -300,6 +300,33 @@ class MeasureConverterTest {
     }
 
     @Test
+    void ordinaryLiquidOutsideTenPercentGetsTheClosestAmountMarkedForChecking() {
+        // 230 mL is 1.19 paper cups: 1 cup is 16% less, 1 and 1/3 is 12% more.
+        MeasureResult water = convert("230ml", Sensitivity.NORMAL, IngredientForm.LIQUID, PAPER_CUP);
+        MeasureResult riceWater = convert("230ml", Sensitivity.RATIO, IngredientForm.LIQUID, PAPER_CUP);
+
+        assertThat(water.status()).isEqualTo(QuantityStatus.NEEDS_CHECK);
+        assertThat(water.text()).isEqualTo("작은 종이컵 1컵과 1/3");
+        assertThat(water.tasteAdjust()).isFalse();
+        // An ingredient whose proportion matters is not approximated beyond its tolerance.
+        assertThat(riceWater.status()).isEqualTo(QuantityStatus.NEEDS_CHECK);
+        assertThat(riceWater.text()).isEqualTo("230ml");
+        assertThat(riceWater.toolVariantId()).isNull();
+    }
+
+    @Test
+    void soySauceInACupIsNeverMoreThanTheSource() {
+        // 50 mL of seasoning: a third of the cup would be 64 mL, so it goes to spoons instead.
+        MeasureResult result = convert("50ml", Sensitivity.HIGH, IngredientForm.LIQUID,
+                RICE_SPOON, PAPER_CUP, WATER_BOTTLE);
+
+        assertThat(result.status()).isEqualTo(QuantityStatus.CONVERTED_APPROX);
+        assertThat(result.toolVariantId()).isEqualTo("spoon_rice");
+        assertThat(result.count() * 10).isLessThanOrEqualTo(50 + 1e-6);
+        assertThat(result.tasteAdjust()).isTrue();
+    }
+
+    @Test
     void measuredVolumeIsUsedWhenChoosingTheTool() {
         Variant soupBowl = tool("soup_bowl", "국그릇", 500.0, null, List.of());
 

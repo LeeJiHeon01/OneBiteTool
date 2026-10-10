@@ -147,11 +147,21 @@ public class MeasureConverter {
         }
         double ml = toMl(volume);
         ContentType contentType = contentTypeOf(request.form());
-        Optional<Expression> expression = spoonUnit
-                ? spooned(spoonOrder.stream().flatMap(id -> ownedMeasuringTool(request, id).stream()).toList(),
-                        ml, request.sensitivity(), contentType)
-                : plainVolume(request, ml, contentType);
-        return expression.map(found -> found.toResult(seasoning, note))
+        if (spoonUnit) {
+            return spooned(spoonOrder.stream().flatMap(id -> ownedMeasuringTool(request, id).stream()).toList(),
+                    ml, request.sensitivity(), contentType, units.normalToleranceRatio())
+                    .map(found -> found.toResult(seasoning, note))
+                    .orElseGet(() -> MeasureResult.unconverted(rawText, seasoning, QuantityStatus.NEEDS_CHECK));
+        }
+        Optional<Expression> expression = plainVolume(request, ml, contentType);
+        if (expression.isPresent()) {
+            return expression.get().toResult(seasoning, note);
+        }
+        // An ordinary liquid with no amount inside the tolerance: the closest amount, marked for checking.
+        // An ingredient whose proportion matters is never approximated beyond its tolerance.
+        Optional<Expression> closest = request.sensitivity() == Sensitivity.NORMAL
+                ? closestPoured(request, ml, contentType) : Optional.empty();
+        return closest.map(found -> found.toResult(false, note, QuantityStatus.NEEDS_CHECK))
                 .orElseGet(() -> MeasureResult.unconverted(rawText, seasoning, QuantityStatus.NEEDS_CHECK));
     }
 
@@ -165,7 +175,8 @@ public class MeasureConverter {
                 .filter(MeasureConverter::isSpoon)
                 .sorted(Comparator.comparingDouble(Variant::representativeVolumeMl).reversed())
                 .toList();
-        Optional<Expression> spoonAmount = spooned(spoons, ml, request.sensitivity(), contentType);
+        Optional<Expression> spoonAmount = spooned(spoons, ml, request.sensitivity(), contentType,
+                units.liquidToleranceRatio());
         if (ml < SMALL_VOLUME_ML && spoonAmount.filter(Expression::isComfortable).isPresent()) {
             return spoonAmount;
         }
@@ -173,11 +184,21 @@ public class MeasureConverter {
         return poured.isPresent() ? poured : spoonAmount;
     }
 
+    /** The amount closest to the source in any owned cup, bottle or bowl, whatever its error. */
+    private Optional<Expression> closestPoured(Request request, double ml, ContentType contentType) {
+        List<Variant> measuring = request.ownedTools().stream().filter(Variant::isMeasuringTool).toList();
+        return pourableInOrder(measuring).stream()
+                .flatMap(tool -> express(ml / tool.representativeVolumeMl(), Sensitivity.NORMAL, tool, contentType,
+                        Double.MAX_VALUE).stream())
+                .min(Comparator.comparingDouble(Expression::error).thenComparingInt(Expression::pours));
+    }
+
     /** The first spoon that needs few fills; when none does, the first spoon that can express the amount. */
     private Optional<Expression> spooned(List<Variant> spoonsInOrder, double ml, Sensitivity sensitivity,
-                                         ContentType contentType) {
+                                         ContentType contentType, double normalTolerance) {
         List<Expression> expressions = spoonsInOrder.stream()
-                .flatMap(spoon -> express(ml / spoon.representativeVolumeMl(), sensitivity, spoon, contentType).stream())
+                .flatMap(spoon -> express(ml / spoon.representativeVolumeMl(), sensitivity, spoon, contentType,
+                        normalTolerance).stream())
                 .toList();
         return expressions.stream().filter(Expression::isComfortable).findFirst()
                 .or(() -> expressions.stream().findFirst());
@@ -185,20 +206,15 @@ public class MeasureConverter {
 
     /**
      * Fewest pours first, then the tidiest amount (whole, then a half, then thirds), then the
-     * usual order of the tools, then the smallest error. Only amounts inside the tolerance compete.
+     * usual order of the tools, then the smallest error. Only amounts inside the liquid tolerance
+     * compete (10% for ordinary liquids too: a quarter more water makes a soup bland); seasoning
+     * is only ever rounded down.
      */
-    // TODO(spec): pourChoiceToleranceRatio (10%) is a provisional value. Without it "fewest pours"
-    // turns 400 mL into one full 500 mL bottle (25% more) instead of two cups (3.5% off).
     private Optional<Expression> poured(List<Variant> toolsInOrder, double ml, Sensitivity sensitivity,
                                         ContentType contentType) {
-        List<Expression> all = toolsInOrder.stream()
-                .flatMap(tool -> express(ml / tool.representativeVolumeMl(), sensitivity, tool, contentType).stream())
-                .toList();
-        // When a close amount exists, a rougher one never wins just because it is fewer pours.
-        List<Expression> close = all.stream()
-                .filter(expression -> expression.error() <= units.pourChoiceToleranceRatio() + EPSILON)
-                .toList();
-        return (close.isEmpty() ? all : close).stream()
+        return toolsInOrder.stream()
+                .flatMap(tool -> express(ml / tool.representativeVolumeMl(), sensitivity, tool, contentType,
+                        units.liquidToleranceRatio()).stream())
                 .min(Comparator.comparingInt(Expression::pours)
                         .thenComparingInt(Expression::tidiness)
                         .thenComparingInt((Expression expression) -> toolsInOrder.indexOf(expression.tool()))
@@ -258,6 +274,12 @@ public class MeasureConverter {
      */
     private Optional<Expression> express(double fills, Sensitivity sensitivity, Variant tool,
                                          ContentType contentType) {
+        return express(fills, sensitivity, tool, contentType, units.normalToleranceRatio());
+    }
+
+    /** @param normalTolerance tolerance of an ordinary ingredient here; liquids poured into a tool use a tighter one */
+    private Optional<Expression> express(double fills, Sensitivity sensitivity, Variant tool,
+                                         ContentType contentType, double normalTolerance) {
         boolean seasoning = sensitivity == Sensitivity.HIGH;
         if (fills <= EPSILON) {
             return Optional.empty();
@@ -297,8 +319,7 @@ public class MeasureConverter {
                     .filter(candidate -> candidate.total() <= fills + EPSILON)
                     .max(Comparator.comparingDouble(Expression::total));
         }
-        double tolerance = sensitivity == Sensitivity.RATIO
-                ? units.ratioToleranceRatio() : units.normalToleranceRatio();
+        double tolerance = sensitivity == Sensitivity.RATIO ? units.ratioToleranceRatio() : normalTolerance;
         return candidates
                 .min(Comparator.comparingDouble(Expression::error).thenComparingDouble(Expression::total))
                 .filter(candidate -> candidate.error() <= tolerance + EPSILON);
@@ -337,8 +358,11 @@ public class MeasureConverter {
         }
 
         MeasureResult toResult(boolean tasteAdjust, String note) {
-            return new MeasureResult(tool.id(), key, total(), text() + note, tasteAdjust,
-                    QuantityStatus.CONVERTED_APPROX);
+            return toResult(tasteAdjust, note, QuantityStatus.CONVERTED_APPROX);
+        }
+
+        MeasureResult toResult(boolean tasteAdjust, String note, QuantityStatus status) {
+            return new MeasureResult(tool.id(), key, total(), text() + note, tasteAdjust, status);
         }
 
         private String text() {

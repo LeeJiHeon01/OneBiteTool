@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
-import { importRecipe, searchRecipes, type ImportJob } from '@/api/recipes';
+import { fetchSimilar, importRecipe, searchRecipes, type ImportJob } from '@/api/recipes';
 import { Badge } from '@/components/badge';
 import { Button } from '@/components/button';
 import { CenterState } from '@/components/headers';
@@ -155,6 +155,8 @@ export default function SearchScreen() {
   const [phase, setPhase] = useState<Phase>('searching');
   const [attempt, setAttempt] = useState(0);
   const [results, setResults] = useState<SearchResult[]>([]);
+  // Stored dishes with a similar name, offered when this one could not be found.
+  const [similar, setSimilar] = useState<SearchResult[]>([]);
   // Why the search failed (ApiError code); decides what the error screen says.
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [showHidden, setShowHidden] = useState(false);
@@ -182,6 +184,12 @@ export default function SearchScreen() {
           if (!gaveUp()) setImportStatus(status);
         });
         if (gaveUp()) return;
+        if (!imported) {
+          // Optional: without it the screen only says the dish was not found.
+          const alike = await fetchSimilar(query, toolIds).catch(() => []);
+          if (gaveUp()) return;
+          setSimilar(alike);
+        }
         setResults(imported ? [imported] : []);
         setPhase(imported ? 'results' : 'noResults');
       } catch (error) {
@@ -302,10 +310,25 @@ export default function SearchScreen() {
         <TopBar onBack={() => router.back()} />
         <CenterState
           description={'다른 이름이나 더 간단한 이름으로\n검색해 보세요.'}
-          style={styles.emptyState}
-          title={'레시피를\n찾지 못했어요'}
+          style={similar.length > 0 ? styles.notFoundState : styles.emptyState}
+          title={'아직 이 요리를\n찾지 못했어요'}
           visual={<Picture size={150} source={ILLUSTRATIONS.notFound} style={styles.emptyVisual} />}
         />
+        {similar.length > 0 ? (
+          <View style={styles.similar}>
+            <AppText weight="bold" style={styles.similarTitle}>
+              이런 요리는 바로 볼 수 있어요
+            </AppText>
+            {similar.map((result) => (
+              <Pressable accessibilityRole="button" key={result.id} onPress={() => open(result)} style={styles.similarRow}>
+                <AppText weight="semiBold" style={styles.similarName}>
+                  {result.title}
+                </AppText>
+                <Icon name="chevron" size={16} color={colors.hint} />
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
       </Page>
     );
   }
@@ -389,6 +412,18 @@ const styles = StyleSheet.create({
   queryText: { fontSize: 16 },
   input: { flex: 1, minWidth: 0, height: '100%', fontFamily: fonts.regular, fontSize: 16, color: colors.text },
   searchingState: { paddingTop: 80 },
+  notFoundState: { paddingTop: 30 },
+  similar: { marginTop: 28 },
+  similarTitle: { marginBottom: 6, fontSize: 16 },
+  similarRow: {
+    minHeight: 60,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  similarName: { flex: 1, fontSize: 16 },
   importingState: { paddingTop: 36 },
   stages: { alignSelf: 'center', marginTop: 26, gap: 14 },
   stage: { flexDirection: 'row', alignItems: 'center', gap: 12 },

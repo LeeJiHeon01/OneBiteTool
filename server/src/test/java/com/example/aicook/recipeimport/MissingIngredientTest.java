@@ -49,18 +49,83 @@ class MissingIngredientTest {
     }
 
     @Test
-    void sideIngredientsWithoutARuleAreLeftOutAndReportedAsUnverified() {
+    void onlyIngredientsOnTheOmittableListAreLeftOut() {
         String recipeId = recipe("제육볶음", "돼지고기 앞다리살", "굴소스", "당근", "후추", "양파");
 
-        AdaptationResponse response = adapt(recipeId, "굴소스", "당근", "후추");
+        AdaptationResponse pepper = adapt(recipeId, "후추");
+        AdaptationResponse others = adapt(recipeId, "굴소스", "당근", "후추");
 
-        assertThat(response.status()).isEqualTo(Status.COOKABLE);
-        assertThat(response.changes()).extracting(Change::type)
-                .containsExactly(ChangeType.OMIT_BY_USER, ChangeType.OMIT_BY_USER, ChangeType.OMIT_BY_USER);
-        assertThat(response.changes().get(0).description()).isEqualTo("굴소스 없이 만들어요.");
-        assertThat(response.changes().get(0).impact()).contains("확인된 규칙이 없어요");
-        assertThat(response.ingredients()).extracting(row -> row.name())
-                .containsExactly("돼지고기 앞다리살", "양파");
+        assertThat(pepper.status()).isEqualTo(Status.COOKABLE);
+        assertThat(pepper.changes()).singleElement().satisfies(change -> {
+            assertThat(change.type()).isEqualTo(ChangeType.OMIT);
+            assertThat(change.description()).isEqualTo("후추 없이 만들어요.");
+            assertThat(change.impact()).isEqualTo("없어도 괜찮아요");
+        });
+        assertThat(pepper.ingredients()).extracting(row -> row.name())
+                .containsExactly("돼지고기 앞다리살", "굴소스", "당근", "양파");
+        // Not on the list: needed, never dropped as if that were verified.
+        assertThat(others.status()).isEqualTo(Status.NOT_COOKABLE);
+        assertThat(others.requiredItems()).extracting(RequiredItem::name).containsExactly("굴소스", "당근");
+        assertThat(others.requiredItems().get(0).reason()).isEqualTo("빼도 된다고 확인된 재료가 아니라 필요해요");
+    }
+
+    @Test
+    void sugarIsNeededButSesameIsNot() {
+        String recipeId = recipe("고추장불고기", "돼지고기", "고추장", "설탕", "깨", "양파");
+
+        AdaptationResponse withoutSugar = adapt(recipeId, "설탕");
+        AdaptationResponse withoutSesame = adapt(recipeId, "깨");
+
+        assertThat(withoutSugar.status()).isEqualTo(Status.NOT_COOKABLE);
+        assertThat(withoutSugar.requiredItems()).extracting(RequiredItem::name).containsExactly("설탕");
+        assertThat(withoutSesame.status()).isEqualTo(Status.COOKABLE);
+        assertThat(withoutSesame.changes()).extracting(Change::type).containsExactly(ChangeType.OMIT);
+    }
+
+    @Test
+    void greenOnionIsOptionalOnlyAsAGarnish() {
+        String stirFried = stepRecipe("파볶음밥 아님 볶음", List.of("돼지고기", "대파"),
+                step("대파를 넣고 볶아요", "action.stir_fry", "대파"));
+        String garnished = stepRecipe("고기 볶음", List.of("돼지고기", "대파", "쪽파"),
+                step("돼지고기를 볶아요", "action.stir_fry", "돼지고기"),
+                step("대파와 쪽파를 올려요", "action.plate", "대파", "쪽파"));
+        // The step has no action key, so "only as a garnish" cannot be decided.
+        String unknown = stepRecipe("고기 요리", List.of("돼지고기", "대파"), step("대파를 올려요", null, "대파"));
+
+        // The verified substitute (쪽파) is asked first; without it the stir-fried green onion is needed.
+        assertThat(adapt(stirFried, "대파").pendingQuestions()).hasSize(1);
+        assertThat(declining(stirFried, "대파", "chives").requiredItems()).extracting(RequiredItem::name)
+                .containsExactly("대파");
+        AdaptationResponse garnish = adapt(garnished, "대파", "쪽파");
+        assertThat(garnish.status()).isEqualTo(Status.COOKABLE);
+        assertThat(garnish.changes()).extracting(Change::impact)
+                .containsExactly("장식용이라 없어도 돼요", "장식용이라 없어도 돼요");
+        assertThat(declining(unknown, "대파", "chives").status()).isEqualTo(Status.NOT_COOKABLE);
+    }
+
+    @Test
+    void sesameOilIsOptionalOnlyWhenItFinishesTheDish() {
+        String finishing = stepRecipe("나물 볶음", List.of("시금치", "참기름"),
+                step("시금치를 볶아요", "action.stir_fry", "시금치"),
+                step("참기름을 둘러 섞어요", "action.mix", "참기름"));
+        String cooking = stepRecipe("나물 볶음 둘", List.of("시금치", "참기름"),
+                step("참기름을 두르고 시금치를 볶아요", "action.stir_fry", "시금치", "참기름"));
+
+        AdaptationResponse finished = declining(finishing, "참기름", "perilla_oil");
+        assertThat(finished.status()).isEqualTo(Status.COOKABLE);
+        assertThat(finished.changes()).singleElement()
+                .satisfies(change -> assertThat(change.impact()).isEqualTo("고소한 맛이 조금 줄어요"));
+        assertThat(declining(cooking, "참기름", "perilla_oil").status()).isEqualTo(Status.NOT_COOKABLE);
+    }
+
+    @Test
+    void chiliIsOptionalOnlyUnderTheListedNames() {
+        String recipeId = recipe("닭볶음", "닭고기", "홍고추", "청양고추", "풋고추");
+
+        assertThat(adapt(recipeId, "홍고추").changes()).extracting(Change::impact)
+                .containsExactly("색을 내는 재료라 없어도 돼요");
+        assertThat(adapt(recipeId, "청양고추").changes()).extracting(Change::impact).containsExactly("매운맛이 줄어요");
+        assertThat(adapt(recipeId, "풋고추").status()).isEqualTo(Status.NOT_COOKABLE);
     }
 
     @Test
@@ -84,15 +149,20 @@ class MissingIngredientTest {
         // No main-category ingredient is in the name, so the meat is taken as the centre of the dish.
         assertThat(adapt(recipeId, "돼지고기").requiredItems()).extracting(RequiredItem::reason)
                 .containsExactly("이 요리의 중심 재료라 꼭 필요해요");
-        assertThat(adapt(recipeId, "설탕", "양파").status()).isEqualTo(Status.COOKABLE);
+        // Seasoning and vegetables outside the list are needed as well, for their own reason.
+        assertThat(adapt(recipeId, "설탕", "양파").requiredItems()).extracting(RequiredItem::reason)
+                .containsOnly("빼도 된다고 확인된 재료가 아니라 필요해요");
     }
 
     @Test
-    void otherMainCategoryIngredientsAreOptionalOnceTheDishNameNamesOne() {
+    void otherMainCategoryIngredientsAreNotTheCentreOnceTheDishNameNamesOne() {
         String recipeId = recipe("계란말이", "계란", "게맛살", "당근");
 
-        assertThat(adapt(recipeId, "게맛살", "당근").status()).isEqualTo(Status.COOKABLE);
-        assertThat(adapt(recipeId, "계란").status()).isEqualTo(Status.NOT_COOKABLE);
+        // Still needed, but not because the dish is built around them.
+        assertThat(adapt(recipeId, "게맛살").requiredItems()).extracting(RequiredItem::reason)
+                .containsExactly("빼도 된다고 확인된 재료가 아니라 필요해요");
+        assertThat(adapt(recipeId, "계란").requiredItems()).extracting(RequiredItem::reason)
+                .containsExactly("요리 이름에 들어간 재료라 꼭 필요해요");
     }
 
     @Test
@@ -100,8 +170,10 @@ class MissingIngredientTest {
         // "김치전" contains "김", but that is the 김 of 김치.
         String recipeId = recipe("김치전", "김치", "김", "부침가루");
 
-        assertThat(adapt(recipeId, "김").status()).isEqualTo(Status.COOKABLE);
-        assertThat(adapt(recipeId, "김치").status()).isEqualTo(Status.NOT_COOKABLE);
+        assertThat(adapt(recipeId, "김").requiredItems()).extracting(RequiredItem::reason)
+                .containsExactly("빼도 된다고 확인된 재료가 아니라 필요해요");
+        assertThat(adapt(recipeId, "김치").requiredItems()).extracting(RequiredItem::reason)
+                .containsExactly("요리 이름에 들어간 재료라 꼭 필요해요");
     }
 
     @Test
@@ -110,7 +182,8 @@ class MissingIngredientTest {
 
         assertThat(adapt(recipeId, "계란").status()).isEqualTo(Status.NOT_COOKABLE);
         assertThat(adapt(recipeId, "밥").status()).isEqualTo(Status.NOT_COOKABLE);
-        assertThat(adapt(recipeId, "양파", "케첩").status()).isEqualTo(Status.COOKABLE);
+        assertThat(adapt(recipeId, "밥").requiredItems()).extracting(RequiredItem::reason)
+                .containsExactly("이 요리의 중심 재료라 꼭 필요해요");
     }
 
     @Test
@@ -139,7 +212,7 @@ class MissingIngredientTest {
     }
 
     @Test
-    void decliningEverySubstituteLeavesTheIngredientOutAsUnverified() {
+    void decliningEverySubstituteMakesTheIngredientNeeded() {
         String recipeId = recipe("제육볶음", "돼지고기 앞다리살", "식물성 오일", "양파");
         String oilId = idOf(recipeId, "식물성 오일");
 
@@ -151,8 +224,8 @@ class MissingIngredientTest {
         AdaptationResponse none = adapt(recipeId, List.of(), List.of(
                 new SubstituteAnswer(oilId, "olive_oil", false),
                 new SubstituteAnswer(oilId, "soybean_oil", false)), "식물성 오일");
-        assertThat(none.status()).isEqualTo(Status.COOKABLE);
-        assertThat(none.changes()).extracting(Change::type).containsExactly(ChangeType.OMIT_BY_USER);
+        assertThat(none.status()).isEqualTo(Status.NOT_COOKABLE);
+        assertThat(none.requiredItems()).extracting(RequiredItem::name).containsExactly("식물성 오일");
     }
 
     @Test
@@ -164,7 +237,7 @@ class MissingIngredientTest {
         AdaptationResponse response = adapt(recipeId, List.of("soybean"), List.of(), "올리브유");
 
         assertThat(response.pendingQuestions()).isEmpty();
-        assertThat(response.changes()).extracting(Change::type).containsExactly(ChangeType.OMIT_BY_USER);
+        assertThat(response.requiredItems()).extracting(RequiredItem::name).containsExactly("올리브유");
         // Without the allergy the first substitute is offered.
         assertThat(adapt(recipeId, List.of(), List.of(), "올리브유").pendingQuestions()).singleElement()
                 .satisfies(question -> assertThat(question.ingredientId()).isEqualTo(oilId));
@@ -177,7 +250,30 @@ class MissingIngredientTest {
         AdaptationResponse response = adapt(recipeId, "꿀");
 
         assertThat(response.pendingQuestions()).isEmpty();
-        assertThat(response.changes()).extracting(Change::type).containsExactly(ChangeType.OMIT_BY_USER);
+        assertThat(response.requiredItems()).extracting(RequiredItem::name).containsExactly("꿀");
+    }
+
+    /** The user lacks the ingredient and every substitute the rules offer for it. */
+    private AdaptationResponse declining(String recipeId, String ingredientName, String... substituteCodes) {
+        String ingredientId = idOf(recipeId, ingredientName);
+        List<SubstituteAnswer> answers = List.of(substituteCodes).stream()
+                .map(code -> new SubstituteAnswer(ingredientId, code, false))
+                .toList();
+        return adapt(recipeId, List.of(), answers, ingredientName);
+    }
+
+    private static Extract.Step step(String action, String actionKey, String... ingredientNames) {
+        return new Extract.Step(action, actionKey, List.of(ingredientNames), List.of(), null, null, null, null,
+                null, null, null, action);
+    }
+
+    /** A stored recipe with the given steps. */
+    private String stepRecipe(String name, List<String> ingredientNames, Extract.Step... steps) {
+        List<Extract.Ingredient> ingredients = ingredientNames.stream()
+                .map(ingredient -> new Extract.Ingredient(ingredient, "1큰술", null, ingredient + " 1큰술"))
+                .toList();
+        Extract.Page page = new Extract.Page(true, name, null, null, null, ingredients, List.of(steps));
+        return writer.save(name, "https://" + DOMAIN + "/" + name.hashCode(), null, null, page);
     }
 
     /** A stored recipe with one step that uses every ingredient. */
@@ -209,7 +305,8 @@ class MissingIngredientTest {
                 .map(Recipe.Ingredient::id)
                 .toList();
         assertThat(missing).hasSize(missingNames.length);
-        Profile profile = new Profile(SkillLevel.LOW, List.of("spoon_rice"), null, allergenCodes);
+        Profile profile = new Profile(SkillLevel.LOW, List.of("spoon_rice", "knife", "frying_pan", "gas_stove"), null,
+                allergenCodes);
         return adaptations.adapt(new AdaptationRequest(recipeId, 1, missing, answers, profile));
     }
 }

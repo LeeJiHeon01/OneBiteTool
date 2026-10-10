@@ -140,7 +140,7 @@ class RecipeImportServiceTest {
     }
 
     @Test
-    void preferredSiteIsTriedBeforeOtherSitesButAfterToolFit() {
+    void onlyTheAllowedSiteIsUsedAndAPageThatFitsTheToolsComesFirst() {
         String preferred = "https://www.recipes.example.com/c";
         client.answers.add("""
                 {"candidates":[
@@ -154,6 +154,22 @@ class RecipeImportServiceTest {
 
         assertThat(fetched).containsExactly(preferred);
         assertThat(recipes.find(job.recipeId()).sourceUrl()).isEqualTo(preferred);
+    }
+
+    @Test
+    void pagesOfOtherSitesAreRejectedWithoutBeingFetched() {
+        client.answers.add("""
+                {"candidates":[
+                  {"url":"https://other.example.org/1","title":"o","reason":"o","needsOtherTools":false},
+                  {"url":"https://blog.example.net/2","title":"b","reason":"b","needsOtherTools":false}]}
+                """);
+
+        ImportJob job = runImport();
+
+        assertThat(job.status()).isEqualTo(Status.NOT_FOUND);
+        assertThat(fetched).isEmpty();
+        assertThat(jdbc.sql("SELECT error_code FROM recipe_import_job WHERE id = :id").param("id", job.id())
+                .query(String.class).single()).isEqualTo("OTHER_SITE,OTHER_SITE");
     }
 
     @Test

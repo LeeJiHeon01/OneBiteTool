@@ -1,12 +1,23 @@
 {
   "status": "DRAFT",
-  "note": "생략·대체 규칙 초안(adaptation_rule, tool_substitution_rule 테이블로 동기화). verifiedBy가 DRAFT_UNVERIFIED인 것은 사람이 아직 검증하지 않은 규칙이다. recipeRef는 고정 레시피의 ref이고 null이면 모든 레시피에 적용한다. 같은 재료의 규칙은 priority가 작은 것부터 시도하며, 적용할 규칙이 없으면 조리 불가다(spec 2.2). 알레르기 재료의 대체에는 쓰지 않는다. mainIngredientCategories는 요리의 중심이 될 수 있는 재료 분류다(2026-10-09 사용자 결정). 없는 재료에 규칙이 없을 때: 요리 이름에 들어간 재료(분류와 상관없이, 예: 고추장불고기의 고추장)는 꼭 필요하다. 이 분류의 재료 중 요리 이름에 들어간 것이 하나도 없으면 이 분류의 재료가 모두 꼭 필요하다. 그 밖의 재료는 \"확인된 규칙 없이 빼고 만든다\"고 알리고 진행한다. recipeRef가 null인 SUBSTITUTE는 같은 역할을 하는 재료끼리의 범용 대체다(식용유↔올리브유·콩기름, 대파↔쪽파, 꿀↔올리고당, 맛술↔청주, 참기름↔들기름). 같은 양으로 바꿔 쓴다. 사용자에게 \"○○ 있나요?\"라고 물어 있을 때만 적용한다. 사용자가 피하는 알레르기가 든 재료, 알레르기 확인이 안 된 재료, 그 레시피에 이미 들어 있는 재료는 대체안으로 묻지 않는다.",
+  "note": "생략·대체 규칙 초안(adaptation_rule, tool_substitution_rule 테이블로 동기화). verifiedBy가 DRAFT_UNVERIFIED인 것은 사람이 아직 검증하지 않은 규칙이다. recipeRef는 고정 레시피의 ref이고 null이면 모든 레시피에 적용한다. 같은 재료의 규칙은 priority가 작은 것부터 시도하며, 적용할 규칙이 없으면 조리 불가다(spec 2.2). 알레르기 재료의 대체에는 쓰지 않는다. mainIngredientCategories는 요리의 중심이 될 수 있는 재료 분류다(2026-10-09 사용자 결정). 없는 재료에 규칙이 없을 때: 요리 이름에 들어간 재료(분류와 상관없이, 예: 고추장불고기의 고추장)는 꼭 필요하다. 이 분류의 재료 중 요리 이름에 들어간 것이 하나도 없으면 이 분류의 재료가 모두 꼭 필요하다. 그 밖의 재료는 \"확인된 규칙 없이 빼고 만든다\"고 알리고 진행한다. recipeRef가 null인 SUBSTITUTE는 같은 역할을 하는 재료끼리의 범용 대체다(식용유↔올리브유·콩기름, 대파↔쪽파, 꿀↔올리고당, 맛술↔청주, 참기름↔들기름). 같은 양으로 바꿔 쓴다. 사용자에게 \"○○ 있나요?\"라고 물어 있을 때만 적용한다. 사용자가 피하는 알레르기가 든 재료, 알레르기 확인이 안 된 재료, 그 레시피에 이미 들어 있는 재료는 대체안으로 묻지 않는다. omittable은 없어도 되는 재료의 허용 목록이다(사용자 결정 2026-10-10): 여기에 있는 재료만 대체 규칙 없이 뺄 수 있고, 없는 재료는 '필요해요'로 안내한다. names가 있으면 레시피에 그 이름으로 적힌 경우만 해당한다(홍고추·청양고추·김가루). when은 ALWAYS / PLATING(그 재료가 담기 단계에서만 쓰일 때) / FINISHING(담기 단계이거나 마지막 가열 단계 뒤의 불·시간 없는 단계에서만 쓰일 때)이고, 판단할 수 없으면 생략 불가다.",
   "mainIngredientCategories": [
     "육류",
     "해산물",
     "곡물·면·떡",
     "두부·콩",
     "알·유제품"
+  ],
+  "omittable": [
+    { "ingredient": "sesame", "names": [], "when": "ALWAYS", "message": "없어도 괜찮아요" },
+    { "ingredient": "sesame_salt", "names": [], "when": "ALWAYS", "message": "없어도 괜찮아요" },
+    { "ingredient": "pepper", "names": [], "when": "ALWAYS", "message": "없어도 괜찮아요" },
+    { "ingredient": "gim", "names": ["김가루"], "when": "ALWAYS", "message": "없어도 괜찮아요" },
+    { "ingredient": "chives", "names": [], "when": "PLATING", "message": "장식용이라 없어도 돼요" },
+    { "ingredient": "green_onion", "names": [], "when": "PLATING", "message": "장식용이라 없어도 돼요" },
+    { "ingredient": "chili", "names": ["홍고추"], "when": "ALWAYS", "message": "색을 내는 재료라 없어도 돼요" },
+    { "ingredient": "chili", "names": ["청양고추"], "when": "ALWAYS", "message": "매운맛이 줄어요" },
+    { "ingredient": "sesame_oil", "names": [], "when": "FINISHING", "message": "고소한 맛이 조금 줄어요" }
   ],
   "ingredientRules": [
     {

@@ -33,6 +33,12 @@ public class RecipeController {
         return recipeService.suggestions(tools);
     }
 
+    @GetMapping("/similar")
+    public List<SearchResult> similar(@RequestParam("q") String query,
+                                      @RequestParam(name = "tools", required = false) List<String> tools) {
+        return recipeService.similar(query, tools);
+    }
+
     @GetMapping("/{id}")
     public Detail detail(@PathVariable("id") String id,
                          @RequestParam(name = "tools", required = false) List<String> tools) {

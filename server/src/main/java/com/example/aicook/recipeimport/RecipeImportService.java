@@ -128,6 +128,11 @@ public class RecipeImportService {
     private Optional<String> importRecipe(String jobId, String dishName, List<String> ownedTools) {
         setStatus(jobId, Status.SEARCHING);
         for (Extract.Candidate candidate : search(dishName, ownedTools)) {
+            // The source is fixed to the configured sites: a page from anywhere else is not even fetched.
+            if (!isPreferredSite(candidate.url())) {
+                noteRejection(jobId, "OTHER_SITE");
+                continue;
+            }
             Optional<String> stored = writer.findByUrl(candidate.url());
             if (stored.isPresent()) {
                 return stored;
@@ -201,7 +206,10 @@ public class RecipeImportService {
                 page.get().sourceStepCount(), null);
     }
 
-    /** Candidate pages: the ones that fit the user's tools first, preferred sites first among those. Only well-formed, distinct addresses. */
+    /**
+     * Candidate pages, the allowed sites first and among those the ones that fit the user's
+     * tools first. Only well-formed, distinct addresses.
+     */
     private List<Extract.Candidate> search(String dishName, List<String> ownedTools) {
         Map<String, Object> input = new LinkedHashMap<>();
         input.put("dishName", dishName);
@@ -213,9 +221,9 @@ public class RecipeImportService {
         Map<String, Extract.Candidate> byUrl = new LinkedHashMap<>();
         candidates.stream()
                 .filter(candidate -> isHttpUrl(candidate.url()))
-                // Fitting the user's tools comes first, then the preferred sites.
-                .sorted(Comparator.comparing(Extract.Candidate::needsOtherTools)
-                        .thenComparing(candidate -> !isPreferredSite(candidate.url())))
+                // Pages of other sites are rejected later; they go last so they never crowd out an allowed one.
+                .sorted(Comparator.comparing((Extract.Candidate candidate) -> !isPreferredSite(candidate.url()))
+                        .thenComparing(Extract.Candidate::needsOtherTools))
                 .forEach(candidate -> byUrl.putIfAbsent(candidate.url(), candidate));
         return byUrl.values().stream().limit(MAX_CANDIDATES).toList();
     }

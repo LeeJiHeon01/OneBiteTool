@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
  *
  * @param volumeTools       containers to try after cups for a plain volume, in order
  *                          (the water bottle before bowls)
- * @param pourChoiceToleranceRatio when an amount this close to the source exists, only amounts
- *                          this close compete for "fewest pours" (provisional value)
+ * @param liquidToleranceRatio tolerance when a liquid volume goes into a cup, bottle or bowl;
+ *                          applies to ordinary ingredients too (water, stock)
  * @param toolCounters      counter word of a container that is counted itself ("생수병 1병")
  * @param customVolumeTools tools whose volume the user may measure against a water bottle (spec 4.8)
  * @param customVolumeMinMl smallest user-measured volume the server accepts
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  */
 public record Units(List<VolumeUnit> volumeUnits, List<String> weightUnits, List<String> vagueWords,
                     List<String> volumeTools, double normalToleranceRatio,
-                    double ratioToleranceRatio, double pourChoiceToleranceRatio,
+                    double ratioToleranceRatio, double liquidToleranceRatio,
                     Map<String, String> toolCounters,
                     List<String> customVolumeTools, double customVolumeMinMl, double customVolumeMaxMl) {
 
